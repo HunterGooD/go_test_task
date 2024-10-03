@@ -1,1 +1,4 @@
 .env
+pgadmin/
+pgdata/
+dist/

@@ -1,5 +1,37 @@
 version: "3.9"
 services:
+
+  api:
+    build:
+      context: ./
+      dockerfile: ./build/music_service/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      goose:
+        condition: service_started
+        restart: true
+    networks: 
+      - postgres
+
+  goose:
+    build:
+      context: ./
+      dockerfile: ./build/goose/Dockerfile
+    container_name: goose_container
+    environment:
+      GOOSE_DRIVER: ${GOOSE_DRIVER:-postgres}
+      # GOOSE_DBSTRING: postgresql://username:password@postgres:5432/musics_service?sslmode=disable
+      GOOSE_DBSTRING: ${GOOSE_DBSTRING:-postgresql://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable}
+    volumes:
+      - ./db/migrations:/app/db/migrations
+    depends_on:
+      postgres:
+        condition: service_started
+        restart: true
+    networks:
+      - postgres
+
   postgres:
     container_name: postgres_container
     image: postgres:latest
