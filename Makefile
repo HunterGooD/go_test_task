@@ -20,7 +20,7 @@ compose_db:
 	$(eval export HOST=postgres)
 	export DB_CONNECTION="postgresql://${USERNAME}:${PASSWORD}@${HOST}:5432/${DB_NAME}?sslmode=disable" && \
 	export GOOSE_DBSTRING=${DB_CONNECTION} && \
-	docker-compose up --rm
+	docker-compose up
 
 compose_db_sh:
 	$(eval export HOST=postgres)
