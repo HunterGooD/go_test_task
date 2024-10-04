@@ -16,6 +16,7 @@ RUN OUTPUT_DIR=/app make buildgo
 
 # Run the tests in the container
 FROM build-stage AS run-test-stage
+RUN go generate ./...
 RUN go test -v ./...
 
 # Deploy the application binary into a lean image
