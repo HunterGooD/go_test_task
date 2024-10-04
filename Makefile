@@ -17,14 +17,14 @@ dbc:
 	goose -dir db/migrations create "$(MIGRATION_NAME)" sql
 
 compose_db: 
-	$(eval export HOST=postgres)
-	export DB_CONNECTION="postgresql://${USERNAME}:${PASSWORD}@${HOST}:5432/${DB_NAME}?sslmode=disable" && \
+	$(eval export HOST_DB=postgres)
+	export DB_CONNECTION="postgresql://${USERNAME}:${PASSWORD}@${HOST_DB}:5432/${DB_NAME}?sslmode=disable" && \
 	export GOOSE_DBSTRING=${DB_CONNECTION} && \
 	docker-compose up
 
 compose_db_sh:
-	$(eval export HOST=postgres)
-	export DB_CONNECTION="postgresql://${USERNAME}:${PASSWORD}@${HOST}:5432/${DB_NAME}?sslmode=disable" && \
+	$(eval export HOST_DB=postgres)
+	export DB_CONNECTION="postgresql://${USERNAME}:${PASSWORD}@${HOST_DB}:5432/${DB_NAME}?sslmode=disable" && \
 	export GOOSE_DBSTRING=${DB_CONNECTION} && \
 	docker-compose run --rm goose /bin/sh 
 	# /go/bin/goose -dir=/app/db/migrations/ -v status
@@ -35,3 +35,6 @@ cleango:
 buildgo: cleango
 	@mkdir -p ${OUTPUT_DIR}
 	CGO_ENABLED=0 GOOS=linux go build -o ${OUTPUT_DIR}/${APP} ./cmd/music_service/
+
+rungo:
+	go run ./cmd/music_service/ 

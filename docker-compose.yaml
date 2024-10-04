@@ -6,7 +6,7 @@ services:
       context: ./
       dockerfile: ./build/music_service/Dockerfile
     ports:
-      - "8080:8080"
+      - "${PORT_API:-8080}:${PORT_API:-8080}"
     depends_on:
       goose:
         condition: service_started
