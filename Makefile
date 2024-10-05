@@ -38,3 +38,6 @@ buildgo: cleango
 
 rungo:
 	go run ./cmd/music_service/ 
+
+testgo:
+	go test ./...

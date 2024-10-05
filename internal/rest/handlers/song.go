@@ -1,12 +1,16 @@
 package handlers
 
 import (
+	"context"
 	"log/slog"
 
+	"github.com/HunterGooD/go_test_task/internal/domain/entity"
 	"github.com/gin-gonic/gin"
 )
 
+//go:generate mockery --name SongUsecase
 type SongUsecase interface {
+	GetListSong(ctx context.Context, filters map[string]string) ([]entity.Song, error)
 }
 
 type SongHandler struct {

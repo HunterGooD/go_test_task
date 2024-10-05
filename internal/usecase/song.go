@@ -3,28 +3,22 @@ package usecase
 import (
 	"context"
 
-	"github.com/HunterGooD/go_test_task/internal/entity"
+	"github.com/HunterGooD/go_test_task/internal/domain/entity"
+	"github.com/HunterGooD/go_test_task/internal/domain/interfaces"
 )
 
-//go:generate mockery --name SongRepository
-type SongRepository interface {
-	GetSongs(ctx context.Context, filters map[string]string) ([]entity.Song, error)
-}
-
-type GroupRepository interface {
-}
-
 type SongUsecase struct {
-	songRepo  SongRepository
-	groupRepo GroupRepository
+	songRepo                      interfaces.SongRepository
+	transactionManagerSongsGroups interfaces.TransactionManagerSongsGroups
 }
 
-func NewSongUsecase(sr SongRepository, gr GroupRepository) *SongUsecase {
-	return &SongUsecase{sr, gr}
+// NewSongUsecase operations with songs get, change, delete
+func NewSongUsecase(sr interfaces.SongRepository, tmSG interfaces.TransactionManagerSongsGroups) *SongUsecase {
+	return &SongUsecase{sr, tmSG}
 }
 
-func (su *SongUsecase) GetSongs(ctx context.Context, filters map[string]string) ([]entity.Song, error) {
-	res, err := su.songRepo.GetSongs(ctx, filters)
+func (su *SongUsecase) GetListSong(ctx context.Context, filters map[string]string) ([]entity.Song, error) {
+	res, err := su.songRepo.GetListSong(ctx, 10, 0, filters)
 	if err != nil {
 		return nil, err
 	}
