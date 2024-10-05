@@ -9,19 +9,22 @@ CREATE TABLE IF NOT EXISTS songs (
     m_text TEXT,
     m_release_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
-    update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP
 );
 
 CREATE OR REPLACE TRIGGER update_data_systems_modtime BEFORE UPDATE ON songs FOR EACH ROW EXECUTE PROCEDURE update_update_at_column();
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE INDEX IF NOT EXISTS idx_text  ON songs USING gin (m_text gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_text  ON songs USING gin (m_text gin_trgm_ops) WHERE deleted_at IS NULL;
 
-CREATE INDEX IF NOT EXISTS idx_song  ON songs (m_name);
-CREATE INDEX IF NOT EXISTS idx_link  ON songs (m_link);
+CREATE INDEX IF NOT EXISTS idx_song  ON songs (m_name) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_link  ON songs (m_link) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_song_deleted_at  ON songs (coalesce(deleted_at));
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS songs;
+DROP FUNCTION IF EXISTS update_update_at_column;
 -- +goose StatementEnd
