@@ -12,3 +12,9 @@ var (
 	// ErrBadParamInput will throw if the given request-body or params is not valid
 	ErrBadParamInput = errors.New("params is not valid")
 )
+
+// ErrorResponse структура для возврата ошибки в формате JSON
+type ErrorResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}

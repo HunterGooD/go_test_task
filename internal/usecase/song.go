@@ -17,11 +17,16 @@ func NewSongUsecase(sr interfaces.SongRepository, tmSG interfaces.TransactionMan
 	return &SongUsecase{sr, tmSG}
 }
 
-func (su *SongUsecase) GetListSong(ctx context.Context, filters map[string]string) ([]entity.Song, error) {
-	res, err := su.songRepo.GetListSong(ctx, 10, 0, filters)
-	if err != nil {
-		return nil, err
-	}
+// GetListSong select all songs
+func (su *SongUsecase) GetListSong(ctx context.Context, page, pageSize int, filters *entity.SongFilters) ([]entity.Song, error) {
+	offset := (page - 1) * pageSize
+	return su.songRepo.GetListSong(ctx, offset, pageSize, filters)
+}
 
-	return res, err
+func (su *SongUsecase) TotalSongs(ctx context.Context) (int, error) {
+	return su.songRepo.Total(ctx)
+}
+
+func (su *SongUsecase) GetSongTextByID(ctx context.Context, id int64) {
+
 }

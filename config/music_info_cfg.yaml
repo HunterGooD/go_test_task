@@ -1,0 +1,5 @@
+package: api
+output: internal/api/music_info.gen.go
+generate:
+  models: true
+  client: true

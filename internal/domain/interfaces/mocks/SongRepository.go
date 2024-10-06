@@ -109,18 +109,18 @@ func (_m *SongRepository) DeleteSoftByName(ctx context.Context, name string) err
 }
 
 // DeleteSoftSong provides a mock function with given fields: ctx
-func (_m *SongRepository) DeleteSoftSong(ctx context.Context) string {
+func (_m *SongRepository) DeleteSoftSong(ctx context.Context) error {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteSoftSong")
 	}
 
-	var r0 string
-	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(string)
+		r0 = ret.Error(0)
 	}
 
 	return r0
@@ -186,9 +186,9 @@ func (_m *SongRepository) GetByName(ctx context.Context, name string) (*entity.S
 	return r0, r1
 }
 
-// GetListSong provides a mock function with given fields: ctx, page, pageSize, filters
-func (_m *SongRepository) GetListSong(ctx context.Context, page int, pageSize int, filters map[string]string) ([]entity.Song, error) {
-	ret := _m.Called(ctx, page, pageSize, filters)
+// GetListSong provides a mock function with given fields: ctx, offset, limit, filters
+func (_m *SongRepository) GetListSong(ctx context.Context, offset int, limit int, filters *entity.SongFilters) ([]entity.Song, error) {
+	ret := _m.Called(ctx, offset, limit, filters)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetListSong")
@@ -196,19 +196,19 @@ func (_m *SongRepository) GetListSong(ctx context.Context, page int, pageSize in
 
 	var r0 []entity.Song
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, map[string]string) ([]entity.Song, error)); ok {
-		return rf(ctx, page, pageSize, filters)
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, *entity.SongFilters) ([]entity.Song, error)); ok {
+		return rf(ctx, offset, limit, filters)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, map[string]string) []entity.Song); ok {
-		r0 = rf(ctx, page, pageSize, filters)
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, *entity.SongFilters) []entity.Song); ok {
+		r0 = rf(ctx, offset, limit, filters)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entity.Song)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int, map[string]string) error); ok {
-		r1 = rf(ctx, page, pageSize, filters)
+	if rf, ok := ret.Get(1).(func(context.Context, int, int, *entity.SongFilters) error); ok {
+		r1 = rf(ctx, offset, limit, filters)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -217,24 +217,22 @@ func (_m *SongRepository) GetListSong(ctx context.Context, page int, pageSize in
 }
 
 // GetSongTextByID provides a mock function with given fields: ctx, songID
-func (_m *SongRepository) GetSongTextByID(ctx context.Context, songID int64) (*entity.Song, error) {
+func (_m *SongRepository) GetSongTextByID(ctx context.Context, songID int64) (string, error) {
 	ret := _m.Called(ctx, songID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSongTextByID")
 	}
 
-	var r0 *entity.Song
+	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) (*entity.Song, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (string, error)); ok {
 		return rf(ctx, songID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64) *entity.Song); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) string); ok {
 		r0 = rf(ctx, songID)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*entity.Song)
-		}
+		r0 = ret.Get(0).(string)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
@@ -269,6 +267,34 @@ func (_m *SongRepository) GetSongTextByName(ctx context.Context, name string) (*
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = rf(ctx, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Total provides a mock function with given fields: ctx
+func (_m *SongRepository) Total(ctx context.Context) (int, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Total")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (int, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) int); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}

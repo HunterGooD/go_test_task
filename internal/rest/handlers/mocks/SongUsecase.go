@@ -15,9 +15,9 @@ type SongUsecase struct {
 	mock.Mock
 }
 
-// GetListSong provides a mock function with given fields: ctx, filters
-func (_m *SongUsecase) GetListSong(ctx context.Context, filters map[string]string) ([]entity.Song, error) {
-	ret := _m.Called(ctx, filters)
+// GetListSong provides a mock function with given fields: ctx, page, pageSize, filters
+func (_m *SongUsecase) GetListSong(ctx context.Context, page int, pageSize int, filters *entity.SongFilters) ([]entity.Song, error) {
+	ret := _m.Called(ctx, page, pageSize, filters)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetListSong")
@@ -25,19 +25,47 @@ func (_m *SongUsecase) GetListSong(ctx context.Context, filters map[string]strin
 
 	var r0 []entity.Song
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) ([]entity.Song, error)); ok {
-		return rf(ctx, filters)
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, *entity.SongFilters) ([]entity.Song, error)); ok {
+		return rf(ctx, page, pageSize, filters)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) []entity.Song); ok {
-		r0 = rf(ctx, filters)
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, *entity.SongFilters) []entity.Song); ok {
+		r0 = rf(ctx, page, pageSize, filters)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entity.Song)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, map[string]string) error); ok {
-		r1 = rf(ctx, filters)
+	if rf, ok := ret.Get(1).(func(context.Context, int, int, *entity.SongFilters) error); ok {
+		r1 = rf(ctx, page, pageSize, filters)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TotalSongs provides a mock function with given fields: ctx
+func (_m *SongUsecase) TotalSongs(ctx context.Context) (int, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TotalSongs")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (int, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) int); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}

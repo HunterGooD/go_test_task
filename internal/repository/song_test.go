@@ -41,7 +41,7 @@ func TestGetListSong(t *testing.T) {
 		WithArgs(limit, offset).
 		WillReturnRows(rows)
 
-	songsList, err := songRepo.GetListSong(context.TODO(), 1, 10, map[string]string{})
+	songsList, err := songRepo.GetListSong(context.TODO(), offset, limit, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, songsList)
@@ -56,9 +56,10 @@ func TestGetSongTextByID(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	songRepo := repository.NewSongRepository(sqlxDB)
 
+	text := "asdkasndkjasjkdhajksdakjjsdkjasjkdnajksndajksndnjkansjkdbajksbd"
 	// rows := sqlmock.NewRows([]string{"id", "m_name", "m_link", "m_text", "m_release_date", "created_at", "update_at", "deleted_at"}).
 	rows := sqlmock.NewRows([]string{"m_text"}).
-		AddRow("asdkasndkjasjkdhajksdakjjsdkjasjkdnajksndajksndnjkansjkdbajksbd")
+		AddRow(text)
 	query := `SELECT m_text FROM songs WHERE id = \$1 AND deleted_at IS NULL`
 	songID := int64(1)
 	mock.ExpectQuery(query).
@@ -67,8 +68,8 @@ func TestGetSongTextByID(t *testing.T) {
 
 	songRes, err := songRepo.GetSongTextByID(context.TODO(), songID)
 	assert.NoError(t, err)
-	assert.NotNil(t, songRes)
-	assert.Equal(t, "asdkasndkjasjkdhajksdakjjsdkjasjkdnajksndajksndnjkansjkdbajksbd", songRes.Text)
+	assert.NotEmpty(t, songRes)
+	assert.Equal(t, "asdkasndkjasjkdhajksdakjjsdkjasjkdnajksndajksndnjkansjkdbajksbd", songRes)
 
 	err = mock.ExpectationsWereMet()
 	assert.NoError(t, err)
@@ -89,7 +90,7 @@ func TestGetSongTextByIDError(t *testing.T) {
 		WillReturnError(sql.ErrNoRows)
 
 	songRes, err := songRepo.GetSongTextByID(context.TODO(), songID)
-	assert.Nil(t, songRes)
+	assert.Empty(t, songRes)
 	assert.Error(t, err)
 
 	err = mock.ExpectationsWereMet()

@@ -12,6 +12,7 @@ services:
       PORT_API: ${PORT_API:-8080}
       DB_CONNECTION: ${DB_CONNECTION}
       DB_DRIVER: ${DB_DRIVER}
+      LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
     depends_on:
       goose:
         condition: service_started

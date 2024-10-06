@@ -11,6 +11,8 @@ type Config struct {
 	DSN string
 	// DBType is type db sqlite3 | postgres | mysql
 	DBType string
+	// LogLevel is level logging
+	LogLevel string
 }
 
 func NewConfig() *Config {
@@ -18,5 +20,9 @@ func NewConfig() *Config {
 	port := os.Getenv("PORT_API")
 	dsn := os.Getenv("DB_CONNECTION")
 	DBtype := os.Getenv("DB_DRIVER")
-	return &Config{host, port, dsn, DBtype}
+	logLevel := os.Getenv("LOG_LEVEL")
+	if len(logLevel) == 0 {
+		logLevel = "INFO"
+	}
+	return &Config{host, port, dsn, DBtype, logLevel}
 }
