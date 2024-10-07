@@ -4,6 +4,8 @@ definitions:
     properties:
       code:
         type: integer
+      error:
+        type: string
       message:
         type: string
     type: object
@@ -59,16 +61,6 @@ definitions:
       text:
         type: string
     type: object
-  entity.SongInsert:
-    properties:
-      group:
-        type: string
-      song:
-        type: string
-    required:
-    - group
-    - song
-    type: object
   entity.SongListResponse:
     properties:
       page:
@@ -81,6 +73,22 @@ definitions:
         type: array
       total:
         type: integer
+    type: object
+  entity.SongRequest:
+    properties:
+      group:
+        type: string
+      link:
+        type: string
+      release_date:
+        type: string
+      song:
+        type: string
+      text:
+        type: string
+    required:
+    - group
+    - song
     type: object
   entity.SongTextResponse:
     properties:
@@ -100,6 +108,93 @@ info:
   title: Music librarry API
   version: 0.0.1alpha
 paths:
+  /song/{song_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deleting song
+      parameters:
+      - description: Song id
+        in: path
+        name: song_id
+        required: true
+        type: integer
+      - description: Is soft delete
+        in: query
+        name: soft
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+        "400":
+          description: Params not valid
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Delete song
+      tags:
+      - Song
+    patch:
+      consumes:
+      - application/json
+      description: Patch song
+      parameters:
+      - description: Song id
+        in: path
+        name: song_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Params not valid
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Patch song
+      tags:
+      - Song
+    put:
+      consumes:
+      - application/json
+      description: Put song
+      parameters:
+      - description: Song id
+        in: path
+        name: song_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Params not valid
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Put song
+      tags:
+      - Song
   /song/{song_id}/text:
     get:
       consumes:
@@ -140,14 +235,14 @@ paths:
         name: song_insert
         required: true
         schema:
-          $ref: '#/definitions/entity.SongInsert'
+          $ref: '#/definitions/entity.SongRequest'
       produces:
       - application/json
       responses:
         "200":
           description: ok
           schema:
-            type: string
+            $ref: '#/definitions/entity.Song'
         "400":
           description: Params not valid
           schema:

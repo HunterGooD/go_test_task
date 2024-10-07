@@ -18,12 +18,42 @@ type SongRepository struct {
 	mock.Mock
 }
 
-// DeleteForceByID provides a mock function with given fields: ctx, id
-func (_m *SongRepository) DeleteForceByID(ctx context.Context, id int64) error {
+// CreateSong provides a mock function with given fields: ctx, group_id, songInput
+func (_m *SongRepository) CreateSong(ctx context.Context, group_id int64, songInput *entity.SongRequest) (*entity.Song, error) {
+	ret := _m.Called(ctx, group_id, songInput)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateSong")
+	}
+
+	var r0 *entity.Song
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, *entity.SongRequest) (*entity.Song, error)); ok {
+		return rf(ctx, group_id, songInput)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, *entity.SongRequest) *entity.Song); ok {
+		r0 = rf(ctx, group_id, songInput)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.Song)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64, *entity.SongRequest) error); ok {
+		r1 = rf(ctx, group_id, songInput)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DeleteForceByGroupID provides a mock function with given fields: ctx, id
+func (_m *SongRepository) DeleteForceByGroupID(ctx context.Context, id int64) error {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteForceByID")
+		panic("no return value specified for DeleteForceByGroupID")
 	}
 
 	var r0 error
@@ -36,17 +66,17 @@ func (_m *SongRepository) DeleteForceByID(ctx context.Context, id int64) error {
 	return r0
 }
 
-// DeleteForceByName provides a mock function with given fields: ctx, name
-func (_m *SongRepository) DeleteForceByName(ctx context.Context, name string) error {
-	ret := _m.Called(ctx, name)
+// DeleteForceByID provides a mock function with given fields: ctx, id
+func (_m *SongRepository) DeleteForceByID(ctx context.Context, id int64) error {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteForceByName")
+		panic("no return value specified for DeleteForceByID")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, name)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -90,42 +120,6 @@ func (_m *SongRepository) DeleteSoftByID(ctx context.Context, id int64) error {
 	return r0
 }
 
-// DeleteSoftByName provides a mock function with given fields: ctx, name
-func (_m *SongRepository) DeleteSoftByName(ctx context.Context, name string) error {
-	ret := _m.Called(ctx, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteSoftByName")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, name)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteSoftSong provides a mock function with given fields: ctx
-func (_m *SongRepository) DeleteSoftSong(ctx context.Context) error {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteSoftSong")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // GetByID provides a mock function with given fields: ctx, id
 func (_m *SongRepository) GetByID(ctx context.Context, id int64) (*entity.Song, error) {
 	ret := _m.Called(ctx, id)
@@ -156,9 +150,9 @@ func (_m *SongRepository) GetByID(ctx context.Context, id int64) (*entity.Song, 
 	return r0, r1
 }
 
-// GetByName provides a mock function with given fields: ctx, name
-func (_m *SongRepository) GetByName(ctx context.Context, name string) (*entity.Song, error) {
-	ret := _m.Called(ctx, name)
+// GetByName provides a mock function with given fields: ctx, song_name, group_id
+func (_m *SongRepository) GetByName(ctx context.Context, song_name string, group_id int64) (*entity.Song, error) {
+	ret := _m.Called(ctx, song_name, group_id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByName")
@@ -166,19 +160,49 @@ func (_m *SongRepository) GetByName(ctx context.Context, name string) (*entity.S
 
 	var r0 *entity.Song
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*entity.Song, error)); ok {
-		return rf(ctx, name)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) (*entity.Song, error)); ok {
+		return rf(ctx, song_name, group_id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *entity.Song); ok {
-		r0 = rf(ctx, name)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) *entity.Song); ok {
+		r0 = rf(ctx, song_name, group_id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.Song)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, name)
+	if rf, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
+		r1 = rf(ctx, song_name, group_id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetByNames provides a mock function with given fields: ctx, song_name, group_name
+func (_m *SongRepository) GetByNames(ctx context.Context, song_name string, group_name string) (*entity.Song, error) {
+	ret := _m.Called(ctx, song_name, group_name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByNames")
+	}
+
+	var r0 *entity.Song
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*entity.Song, error)); ok {
+		return rf(ctx, song_name, group_name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *entity.Song); ok {
+		r0 = rf(ctx, song_name, group_name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.Song)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, song_name, group_name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -244,36 +268,6 @@ func (_m *SongRepository) GetSongTextByID(ctx context.Context, songID int64) (st
 	return r0, r1
 }
 
-// GetSongTextByName provides a mock function with given fields: ctx, name
-func (_m *SongRepository) GetSongTextByName(ctx context.Context, name string) (*entity.Song, error) {
-	ret := _m.Called(ctx, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSongTextByName")
-	}
-
-	var r0 *entity.Song
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*entity.Song, error)); ok {
-		return rf(ctx, name)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *entity.Song); ok {
-		r0 = rf(ctx, name)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*entity.Song)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, name)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Total provides a mock function with given fields: ctx
 func (_m *SongRepository) Total(ctx context.Context) (int, error) {
 	ret := _m.Called(ctx)
@@ -302,29 +296,29 @@ func (_m *SongRepository) Total(ctx context.Context) (int, error) {
 	return r0, r1
 }
 
-// UpdateFromMap provides a mock function with given fields: ctx, fields
-func (_m *SongRepository) UpdateFromMap(ctx context.Context, fields map[string]string) (*entity.Song, error) {
-	ret := _m.Called(ctx, fields)
+// UpdateFromMapByID provides a mock function with given fields: ctx, id, fields
+func (_m *SongRepository) UpdateFromMapByID(ctx context.Context, id int64, fields map[string]string) (*entity.Song, error) {
+	ret := _m.Called(ctx, id, fields)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateFromMap")
+		panic("no return value specified for UpdateFromMapByID")
 	}
 
 	var r0 *entity.Song
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) (*entity.Song, error)); ok {
-		return rf(ctx, fields)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, map[string]string) (*entity.Song, error)); ok {
+		return rf(ctx, id, fields)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) *entity.Song); ok {
-		r0 = rf(ctx, fields)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, map[string]string) *entity.Song); ok {
+		r0 = rf(ctx, id, fields)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.Song)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, map[string]string) error); ok {
-		r1 = rf(ctx, fields)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, map[string]string) error); ok {
+		r1 = rf(ctx, id, fields)
 	} else {
 		r1 = ret.Error(1)
 	}

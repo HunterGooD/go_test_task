@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/HunterGooD/go_test_task/internal/domain/entity"
 	"github.com/HunterGooD/go_test_task/internal/domain/interfaces"
@@ -21,8 +22,36 @@ func (g *groupRepository) WithTransaction(tx *sqlx.Tx) interfaces.GroupRepositor
 	return &groupRepository{g.db, tx}
 }
 
-func (g *groupRepository) GetByName(ctx context.Context, name string) (*entity.Group, error) {
-	return nil, nil
+func (g *groupRepository) CreateGroup(ctx context.Context, group_name string) (*entity.Group, error) {
+	var err error
+	var songReturn *entity.Group
+
+	query := `INSERT INTO public.songs(
+		g_name )
+		VALUES ($1); RETURNING id, g_name`
+	// if transaction activ exec in transaction else db exec
+	if g.tx != nil {
+		err = g.tx.GetContext(ctx, songReturn, query, group_name)
+	} else {
+		err = g.db.GetContext(ctx, songReturn, query, group_name)
+	}
+	return songReturn, err
+}
+
+func (g *groupRepository) GetByName(ctx context.Context, group_name string) (*entity.Group, error) {
+	var groupResult *entity.Group
+	var err error
+	query := `SELECT * FROM groups WHERE g_name = ? LIMIT 1`
+
+	if g.tx != nil {
+		err = g.tx.GetContext(ctx, groupResult, query, group_name)
+	} else {
+		err = g.db.GetContext(ctx, groupResult, query, group_name)
+	}
+	if err == sql.ErrNoRows {
+		err = entity.ErrNotFound
+	}
+	return groupResult, err
 }
 
 // GetByID if withDeleted is true then view all rows

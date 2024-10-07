@@ -18,6 +18,36 @@ type GroupRepository struct {
 	mock.Mock
 }
 
+// CreateGroup provides a mock function with given fields: ctx, group_name
+func (_m *GroupRepository) CreateGroup(ctx context.Context, group_name string) (*entity.Group, error) {
+	ret := _m.Called(ctx, group_name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateGroup")
+	}
+
+	var r0 *entity.Group
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*entity.Group, error)); ok {
+		return rf(ctx, group_name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *entity.Group); ok {
+		r0 = rf(ctx, group_name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.Group)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, group_name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteForceByID provides a mock function with given fields: ctx, id
 func (_m *GroupRepository) DeleteForceByID(ctx context.Context, id int64) error {
 	ret := _m.Called(ctx, id)

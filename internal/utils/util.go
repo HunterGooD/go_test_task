@@ -10,6 +10,15 @@ import (
 )
 
 func MergeSongParams(query *entity.SongListQueryParams, filter *entity.SongFilters) *entity.SongFilters {
+
+	if filter == nil {
+		filter = &entity.SongFilters{}
+	}
+
+	if query == nil {
+		query = &entity.SongListQueryParams{}
+	}
+
 	// ID
 	if filter.ID == 0 {
 		filter.ID = query.ID
@@ -31,7 +40,7 @@ func MergeSongParams(query *entity.SongListQueryParams, filter *entity.SongFilte
 	}
 
 	// ReleaseDate (проверяем, что значение не нулевое)
-	if filter.ReleaseDate.IsZero() {
+	if filter.ReleaseDate == nil {
 		filter.ReleaseDate = query.ReleaseDate
 	}
 
@@ -43,8 +52,14 @@ func MergeSongParams(query *entity.SongListQueryParams, filter *entity.SongFilte
 	return filter
 }
 
-func GetFilterString(filters *entity.SongFilters) string {
+func GetFilterString(startPlaceholders int, filters *entity.SongFilters) (string, []any) {
 	conditions := []string{}
+	args := make([]any, 0)
+	argCounter := startPlaceholders
+
+	if filters == nil {
+		return "", args
+	}
 
 	// get value struct without pointer
 	refStruct := reflect.ValueOf(filters).Elem()
@@ -61,23 +76,39 @@ func GetFilterString(filters *entity.SongFilters) string {
 
 		switch value.Kind() {
 		case reflect.String:
-			conditions = append(conditions, fmt.Sprintf("%s LIKE '%s%%'", fieldName, value.String()))
+			// Добавляем placeholder и значение в args
+			conditions = append(conditions, fmt.Sprintf("%s LIKE $%d", fieldName, argCounter))
+			args = append(args, value.String()+"%")
+			argCounter++
 		case reflect.Int, reflect.Int64:
-			conditions = append(conditions, fmt.Sprintf("%s = %d", fieldName, value.Int()))
+			conditions = append(conditions, fmt.Sprintf("%s = $%d", fieldName, argCounter))
+			args = append(args, value.Int())
+			argCounter++
 		case reflect.Struct: // Работаем с временем
 			if field.Type == reflect.TypeOf(time.Time{}) {
-				conditions = append(conditions, fmt.Sprintf("%s = '%s'", fieldName, value.Interface().(time.Time).Format("2006-01-02")))
+				conditions = append(conditions, fmt.Sprintf("%s = $%d", fieldName, argCounter))
+				args = append(args, value.Interface().(time.Time))
+				argCounter++
+			}
+		case reflect.Pointer:
+			if value.Type() == reflect.TypeOf(&time.Time{}) {
+				timeValue := value.Interface().(*time.Time)
+				if timeValue != nil {
+					conditions = append(conditions, fmt.Sprintf("%s = $%d", fieldName, argCounter))
+					args = append(args, *timeValue) // Разыменовываем указатель
+					argCounter++
+				}
 			}
 		default:
-			// TODO: for anything data
+			// TODO: обработка других типов данных
 		}
 	}
 
 	// Join to where statement with AND
 	if len(conditions) > 0 {
-		return "AND " + strings.Join(conditions, " AND ")
+		return "AND " + strings.Join(conditions, " AND "), args
 	}
-	return ""
+	return "", args
 }
 
 func isZero(v reflect.Value) bool {

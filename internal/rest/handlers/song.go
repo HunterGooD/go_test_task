@@ -3,7 +3,10 @@ package handlers
 import (
 	"context"
 	"errors"
+	"io"
+	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/HunterGooD/go_test_task/internal/domain/entity"
 	"github.com/HunterGooD/go_test_task/internal/utils"
@@ -14,16 +17,25 @@ const DEFAULT_LIMIT_SONG int = 10
 
 //go:generate mockery --name SongUsecase
 type SongUsecase interface {
+	CreateNewSong(ctx context.Context, songInput *entity.SongRequest) (*entity.Song, error)
 	GetListSong(ctx context.Context, page, pageSize int, filters *entity.SongFilters) ([]entity.Song, error)
 	TotalSongs(ctx context.Context) (int, error)
+	DeleteSoftByID(ctx context.Context, id int64) error
+	DeleteForceByID(ctx context.Context, id int64) error
+}
+
+//go:generate mockery --name MusicInfoUsecase
+type MusicInfoUsecase interface {
+	GetInfo(ctx context.Context, songInput *entity.SongRequest) error
 }
 
 type SongHandler struct {
-	usecase SongUsecase
+	songUsecase      SongUsecase
+	musicInfoUsecase MusicInfoUsecase
 }
 
-func NewSongHandler(r *gin.Engine, usecase SongUsecase) {
-	handler := &SongHandler{usecase}
+func NewSongHandler(r *gin.Engine, usecase SongUsecase, musicInfo MusicInfoUsecase) {
+	handler := &SongHandler{usecase, musicInfo}
 
 	r.GET("/song/list", handler.GetSongs)
 	r.GET("/song/:song_id/text", handler.GetText)
@@ -48,67 +60,103 @@ func NewSongHandler(r *gin.Engine, usecase SongUsecase) {
 // @Failure 404 {object} entity.ErrorResponse "Can not find ID"
 // @Router /song/list [get]
 func (s *SongHandler) GetSongs(c *gin.Context) {
-	var querySong *entity.SongListQueryParams
 	var page, limit int
-	var result *entity.SongListResponse
+	result := &entity.SongListResponse{}
+	querySong := &entity.SongListQueryParams{}
 	filtersSong := &entity.SongFilters{}
 
 	ctx := c.Request.Context()
 
 	if err := c.BindQuery(querySong); err != nil {
-		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
-			Code:    400,
-			Message: entity.ErrBadParamInput.Error(),
-		})
-		return
+		if !errors.Is(err, io.EOF) {
+			c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+				Code:    400,
+				Error:   entity.ErrBadParamInput.Error(),
+				Message: "Error parse query param",
+			})
+			slog.Error("cannot bind query", slog.String("error", err.Error()))
+			return
+		}
+		err = nil // to nil because skipping error if io.EOF
 	}
+
+	slog.Info("get query param", slog.Any("querySong", querySong), slog.String("url", c.Request.URL.RawQuery))
+
 	if err := c.BindJSON(filtersSong); err != nil {
-		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
-			Code:    400,
-			Message: entity.ErrBadParamInput.Error(),
-		})
-		return
-	}
-	if querySong == nil {
-		page, limit = 1, DEFAULT_LIMIT_SONG
-	} else {
-		if querySong.Limit == 0 {
-			limit = querySong.Limit
+		if !errors.Is(err, io.EOF) {
+			c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+				Code:    400,
+				Error:   entity.ErrBadParamInput.Error(),
+				Message: "Error parse filter body",
+			})
+			slog.Error("cannot bind json", slog.String("error", err.Error()))
+			return
 		}
-		if querySong.Page == 0 {
-			page = querySong.Page
-		}
+		err = nil // to nil because skipping error if io.EOF
 	}
+
+	limit, page = querySong.Limit, querySong.Page
+
+	if querySong.Limit == 0 {
+		limit = DEFAULT_LIMIT_SONG
+	}
+
+	if querySong.Page == 0 {
+		page = 1
+	}
+
 	filtersSong = utils.MergeSongParams(querySong, filtersSong)
 
-	listSongs, err := s.usecase.GetListSong(ctx, page, limit, filtersSong)
+	listSongs, err := s.songUsecase.GetListSong(ctx, page, limit, filtersSong)
 	if err != nil {
 		if errors.Is(err, entity.ErrNotFound) {
+			slog.Error("error on function `s.songUsecase.GetListSong` with params",
+				slog.String("error", err.Error()),
+				slog.Int("page", page),
+				slog.Int("limit", limit),
+				slog.Any("filtesSong", filtersSong),
+			)
 			c.JSON(http.StatusNotFound, entity.ErrorResponse{
 				Code:    404,
-				Message: entity.ErrNotFound.Error(),
+				Error:   entity.ErrNotFound.Error(),
+				Message: "Error usecase get list",
 			})
 			return
 		}
+		slog.Error("error on function `s.songUsecase.GetListSong` with params",
+			slog.String("error", err.Error()),
+			slog.Int("page", page),
+			slog.Int("limit", limit),
+			slog.Any("filtesSong", filtersSong),
+		)
 		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
 			Code:    400,
-			Message: entity.ErrBadParamInput.Error(),
+			Error:   entity.ErrBadParamInput.Error(),
+			Message: "Error usecase get list",
 		})
 		return
 	}
 
-	total, err := s.usecase.TotalSongs(ctx)
+	total, err := s.songUsecase.TotalSongs(ctx)
 	if err != nil {
 		if errors.Is(err, entity.ErrNotFound) {
+			slog.Error("error on function `s.songUsecase.TotalSongs`",
+				slog.String("error", err.Error()),
+			)
 			c.JSON(http.StatusNotFound, entity.ErrorResponse{
 				Code:    404,
-				Message: entity.ErrNotFound.Error(),
+				Error:   entity.ErrNotFound.Error(),
+				Message: "Error usecase total songs",
 			})
 			return
 		}
+		slog.Error("error on function `s.songUsecase.TotalSongs`",
+			slog.String("error", err.Error()),
+		)
 		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
 			Code:    400,
-			Message: entity.ErrBadParamInput.Error(),
+			Error:   entity.ErrBadParamInput.Error(),
+			Message: "Error usecase total songs",
 		})
 		return
 	}
@@ -144,13 +192,43 @@ func (s *SongHandler) GetText(c *gin.Context) {
 // @Tags Song
 // @Accept json
 // @Produce json
-// @Param song_insert body entity.SongInsert true "Song insert"
-// @Success 200 {string} string               "ok"
+// @Param song_insert body entity.SongRequest true "Song insert"
+// @Success 200 {object} entity.Song           "ok"
 // @Failure 400 {object} entity.ErrorResponse "Params not valid"
 // @Failure 404 {object} entity.ErrorResponse "Can not find ID"
 // @Router /song/create [post]
 func (s *SongHandler) CreateNewSong(c *gin.Context) {
+	var songInput *entity.SongRequest
+	ctx := c.Request.Context()
 
+	err := s.musicInfoUsecase.GetInfo(ctx, songInput)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, entity.ErrorResponse{
+			Code:  http.StatusInternalServerError,
+			Error: err.Error(),
+		})
+		return
+	}
+
+	err = c.BindJSON(songInput)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+			Code:  400,
+			Error: entity.ErrBadParamInput.Error(),
+		})
+		return
+	}
+
+	songRes, err := s.songUsecase.CreateNewSong(ctx, songInput)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+			Code:  400,
+			Error: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, songRes)
 }
 
 // @Summary Delete song
@@ -159,13 +237,46 @@ func (s *SongHandler) CreateNewSong(c *gin.Context) {
 // @Tags Song
 // @Accept json
 // @Produce json
-// @Param song_id path int true "Song id"
-// @Success 200 {string} string               "ok"
+// @Param song_id path  int  true  "Song id"
+// @Param soft    query bool false "Is soft delete"
+// @Success 200 "ok"
 // @Failure 400 {object} entity.ErrorResponse "Params not valid"
 // @Failure 404 {object} entity.ErrorResponse "Can not find ID"
 // @Router /song/{song_id} [delete]
 func (s *SongHandler) DeleteSong(c *gin.Context) {
-
+	// songID, err := strconv.Atoi(c.Param("song_id")) return int but id is int64
+	isSoft := c.Query("soft")
+	ctx := c.Request.Context()
+	songID, err := strconv.ParseInt(c.Param("song_id"), 10, 0)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+			Code:  400,
+			Error: entity.ErrBadParamInput.Error(),
+		})
+		return
+	}
+	if len(isSoft) != 0 {
+		// soft deleting
+		err = s.songUsecase.DeleteSoftByID(ctx, songID)
+	} else {
+		// force delete
+		err = s.songUsecase.DeleteForceByID(ctx, songID)
+	}
+	if err != nil {
+		if errors.Is(err, entity.ErrNotFound) {
+			c.JSON(http.StatusNotFound, entity.ErrorResponse{
+				Code:  404,
+				Error: entity.ErrNotFound.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+			Code:  400,
+			Error: entity.ErrBadParamInput.Error(),
+		})
+		return
+	}
+	c.String(http.StatusOK, "ok")
 }
 
 // @Summary Put song

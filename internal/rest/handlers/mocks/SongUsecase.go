@@ -15,6 +15,72 @@ type SongUsecase struct {
 	mock.Mock
 }
 
+// CreateNewSong provides a mock function with given fields: ctx, songInput
+func (_m *SongUsecase) CreateNewSong(ctx context.Context, songInput *entity.SongRequest) (*entity.Song, error) {
+	ret := _m.Called(ctx, songInput)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateNewSong")
+	}
+
+	var r0 *entity.Song
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.SongRequest) (*entity.Song, error)); ok {
+		return rf(ctx, songInput)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.SongRequest) *entity.Song); ok {
+		r0 = rf(ctx, songInput)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.Song)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *entity.SongRequest) error); ok {
+		r1 = rf(ctx, songInput)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DeleteForceByID provides a mock function with given fields: ctx, id
+func (_m *SongUsecase) DeleteForceByID(ctx context.Context, id int64) error {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteForceByID")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteSoftByID provides a mock function with given fields: ctx, id
+func (_m *SongUsecase) DeleteSoftByID(ctx context.Context, id int64) error {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteSoftByID")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetListSong provides a mock function with given fields: ctx, page, pageSize, filters
 func (_m *SongUsecase) GetListSong(ctx context.Context, page int, pageSize int, filters *entity.SongFilters) ([]entity.Song, error) {
 	ret := _m.Called(ctx, page, pageSize, filters)

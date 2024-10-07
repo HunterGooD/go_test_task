@@ -11,17 +11,19 @@ import (
 type SongRepository interface {
 	WithTransaction(tx *sqlx.Tx) SongRepository
 
+	CreateSong(ctx context.Context, group_id int64, songInput *entity.SongRequest) (*entity.Song, error)
+
 	GetListSong(ctx context.Context, offset, limit int, filters *entity.SongFilters) ([]entity.Song, error)
 	GetSongTextByID(ctx context.Context, songID int64) (string, error)
-	GetSongTextByName(ctx context.Context, name string) (*entity.Song, error)
-	GetByName(ctx context.Context, name string) (*entity.Song, error)
+	GetByNames(ctx context.Context, song_name, group_name string) (*entity.Song, error)
+	GetByName(ctx context.Context, song_name string, group_id int64) (*entity.Song, error)
 	GetByID(ctx context.Context, id int64) (*entity.Song, error)
 	Total(ctx context.Context) (int, error)
-	UpdateFromMap(ctx context.Context, fields map[string]string) (*entity.Song, error)
-	DeleteSoftByName(ctx context.Context, name string) error
+
+	UpdateFromMapByID(ctx context.Context, id int64, fields map[string]string) (*entity.Song, error)
+
 	DeleteSoftByID(ctx context.Context, id int64) error
 	DeleteSoftByGroupID(ctx context.Context, id int64) error
-	DeleteSoftSong(ctx context.Context) error
-	DeleteForceByName(ctx context.Context, name string) error
 	DeleteForceByID(ctx context.Context, id int64) error
+	DeleteForceByGroupID(ctx context.Context, id int64) error
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/HunterGooD/go_test_task/internal/rest/handlers"
 	"github.com/HunterGooD/go_test_task/internal/rest/middleware"
 	"github.com/HunterGooD/go_test_task/internal/usecase"
+	"github.com/HunterGooD/go_test_task/pkg/api"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -67,9 +68,11 @@ func main() {
 	// init usecases
 	songUsecase := usecase.NewSongUsecase(songRepo, txManagerSongsGroups)
 	groupUsecase := usecase.NewGroupUsecase(groupRepo, txManagerSongsGroups)
+	apiMusicInfo, _ := api.NewClient("")
+	musicInfoUsecase := usecase.NewMusicInfoUsecase(apiMusicInfo)
 
 	// init handlers with usecase
-	handlers.NewSongHandler(r, songUsecase)
+	handlers.NewSongHandler(r, songUsecase, musicInfoUsecase)
 	handlers.NewGroupHandler(r, groupUsecase)
 
 	// init swagger docs

@@ -77,3 +77,58 @@ func TestGetListSong(t *testing.T) {
 		songRepo.AssertExpectations(t)
 	})
 }
+
+func TestCreateSong(t *testing.T) {
+	t.Run("Test success", func(t *testing.T) {
+		mockSongRepo := new(mocks.SongRepository)
+		mockTransactionManager := new(mocks.TransactionManagerSongsGroups)
+		mockGroupRepo := new(mocks.GroupRepository)
+		songInput := &entity.SongRequest{
+			Song:  "Test Song",
+			Group: "Test Group",
+		}
+		mockTransactionManager.On("Begin").Return(nil)
+		mockTransactionManager.On("SongRepository").Return(mockSongRepo)
+		mockTransactionManager.On("GroupRepository").Return(mockGroupRepo)
+
+		group := &entity.Group{ID: 1, GName: "Test Group"}
+		mockGroupRepo.On("GetByName", mock.Anything, "Test Group").Return(group, nil)
+
+		songExcepted := &entity.Song{ID: 1, Name: "Test Song"}
+		mockSongRepo.On("GetByName", mock.Anything, "Test Song", group.ID).Return(nil, entity.ErrNotFound)
+		mockSongRepo.On("CreateSong", mock.Anything, group.ID, mock.Anything).Return(songExcepted, nil)
+
+		songUsecase := usecase.NewSongUsecase(mockSongRepo, mockTransactionManager)
+
+		song, err := songUsecase.CreateNewSong(context.TODO(), songInput)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, song)
+		assert.Equal(t, songExcepted, song)
+	})
+
+	t.Run("Test error", func(t *testing.T) {
+		mockSongRepo := new(mocks.SongRepository)
+		mockTransactionManager := new(mocks.TransactionManagerSongsGroups)
+		mockGroupRepo := new(mocks.GroupRepository)
+		songInput := &entity.SongRequest{
+			Song:  "Test Song",
+			Group: "Test Group",
+		}
+		mockTransactionManager.On("Begin").Return(nil)
+		mockTransactionManager.On("SongRepository").Return(mockSongRepo)
+		mockTransactionManager.On("GroupRepository").Return(mockGroupRepo)
+		mockTransactionManager.On("Rollback").Return(nil)
+
+		mockGroupRepo.On("GetByName", mock.Anything, "Test Group").Return(nil, entity.ErrNotFound)
+		mockGroupRepo.On("CreateGroup", mock.Anything, "Test Group").Return(nil, entity.ErrNotFound)
+
+		songUsecase := usecase.NewSongUsecase(mockSongRepo, mockTransactionManager)
+
+		song, err := songUsecase.CreateNewSong(context.TODO(), songInput)
+
+		assert.Error(t, err)
+		assert.Nil(t, song)
+	})
+
+}

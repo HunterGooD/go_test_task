@@ -4,7 +4,7 @@ import "time"
 
 type Song struct {
 	ID          int64      `json:"id,omitempty"           db:"id"`
-	Name        string     `json:"name"                   db:"m_name"`
+	Name        string     `json:"name,omitempty"         db:"m_name"`
 	Link        string     `json:"link"                   db:"m_link"`
 	Text        string     `json:"text"                   db:"m_text"`
 	ReleaseDate time.Time  `json:"release_date"           db:"m_release_date"`
@@ -15,9 +15,13 @@ type Song struct {
 	Group       *Group     `json:"group,omitempty"        db:"group"`
 }
 
-type SongInsert struct {
+type SongRequest struct {
 	Group string `json:"group" validate:"required"`
-	Song  string `json:"song" validate:"required"`
+	Song  string `json:"song"  validate:"required"`
+
+	Link        string     `json:"link,omitempty"`
+	Text        string     `json:"text,omitempty"`
+	ReleaseDate *time.Time `json:"release_date,omitempty"`
 }
 
 type SongListResponse struct {
@@ -35,22 +39,22 @@ type SongTextResponse struct {
 
 // SongListQueryParams struct for bind query param ?id=1&name=asda
 type SongListQueryParams struct {
-	ID          int64     `json:"id"           from:"id"`
-	Name        string    `json:"name"         from:"name"`
-	Link        string    `json:"link"         from:"link"`
-	Text        string    `json:"text"         from:"text"`
-	Page        int       `json:"p"            from:"p"`
-	Limit       int       `json:"limit"        from:"limit"`
-	ReleaseDate time.Time `json:"release_date" from:"release_date"`
-	GroupName   string    `json:"group_name"   from:"group_name"`
+	ID          int64      `json:"id,omitempty"           form:"id,omitempty"`
+	Name        string     `json:"name,omitempty"         form:"name,omitempty"`
+	Link        string     `json:"link,omitempty"         form:"link,omitempty"`
+	Text        string     `json:"text,omitempty"         form:"text,omitempty"`
+	Page        int        `json:"p,omitempty"            form:"p,omitempty"`
+	Limit       int        `json:"limit,omitempty"        form:"limit,omitempty"`
+	ReleaseDate *time.Time `json:"release_date,omitempty" form:"release_date,omitempty"`
+	GroupName   string     `json:"group_name,omitempty"   form:"group_name,omitempty"`
 }
 
 // SongFilters struct for bind body json if text biggest
 type SongFilters struct {
-	ID          int64     `json:"id,omitempty"           db:"id"`
-	Name        string    `json:"name,omitempty"         db:"m_name"`
-	Link        string    `json:"link,omitempty"         db:"m_link"`
-	Text        string    `json:"text,omitempty"         db:"m_text"`
-	ReleaseDate time.Time `json:"release_date,omitempty" db:"m_release_date"`
-	GroupName   string    `json:"group_name,omitempty"   db:"g_name"`
+	ID          int64      `json:"id,omitempty"           db:"id"`
+	Name        string     `json:"name,omitempty"         db:"m_name"`
+	Link        string     `json:"link,omitempty"         db:"m_link"`
+	Text        string     `json:"text,omitempty"         db:"m_text"`
+	ReleaseDate *time.Time `json:"release_date,omitempty" db:"m_release_date"`
+	GroupName   string     `json:"group_name,omitempty"   db:"g_name"`
 }
