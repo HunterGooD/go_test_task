@@ -11,14 +11,13 @@ type Song struct {
 	CreatedAt   time.Time  `json:"created_at,omitempty"   db:"created_at"`
 	UpdateAt    time.Time  `json:"update_at,omitempty"    db:"update_at"`
 	DeletedAt   *time.Time `json:"deleted_at,omitempty"   db:"deleted_at"`
-	GroupID     int64      `json:"-"                      db:"group_id"`
+	GroupID     int64      `json:"group_id,omitempty"     db:"group_id"`
 	Group       *Group     `json:"group,omitempty"        db:"group"`
 }
 
 type SongRequest struct {
-	Group string `json:"group" validate:"required"`
-	Song  string `json:"song"  validate:"required"`
-
+	Group       string     `json:"group" validate:"required"`
+	Song        string     `json:"song"  validate:"required"`
 	Link        string     `json:"link,omitempty"`
 	Text        string     `json:"text,omitempty"`
 	ReleaseDate *time.Time `json:"release_date,omitempty"`

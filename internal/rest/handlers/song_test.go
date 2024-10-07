@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/HunterGooD/go_test_task/internal/domain/entity"
 	"github.com/HunterGooD/go_test_task/internal/rest/handlers"
@@ -137,6 +138,7 @@ func TestGetSongs(t *testing.T) {
 
 			assert.Equal(t, tt.expectedCode, w.Code)
 			assert.NotEmpty(t, string(expectedInJSON))
+			assert.Equal(t, string(expectedInJSON), w.Body.String())
 
 			if tt.expectedErrorStruct == nil {
 				result := &entity.SongListResponse{}
@@ -155,4 +157,61 @@ func TestGetSongs(t *testing.T) {
 		})
 	}
 
+}
+
+// Test for POST /song/create
+func TestCreateSong(t *testing.T) {
+	// TODO: Table test
+	gin.SetMode(gin.TestMode)
+	// tables := []struct{}
+	router := gin.Default()
+	mockSongusecase := new(mocks.SongUsecase)
+	mockMusicInfoUsecase := new(mocks.MusicInfoUsecase)
+	d := time.Date(2024, 10, 6, 13, 13, 10, 0, time.Now().UTC().Location())
+	returnMockMU := &entity.SongRequest{
+		Song:        "Test song",
+		Group:       "Test group",
+		Link:        "Test link",
+		Text:        "Test text",
+		ReleaseDate: &d,
+	}
+
+	songReq := &entity.SongRequest{
+		Song:  "Test song",
+		Group: "Test group",
+	}
+
+	expectedResult := &entity.Song{
+		ID:          1,
+		Name:        "Test song",
+		Link:        "Test group",
+		Text:        "Test link",
+		ReleaseDate: d,
+		GroupID:     int64(1),
+	}
+
+	songReqJSON, _ := json.Marshal(songReq)
+
+	mockMusicInfoUsecase.On("GetInfo", mock.Anything, songReq).Run(func(args mock.Arguments) {
+		songReqFN := args.Get(1).(*entity.SongRequest)
+		songReqFN.Link = returnMockMU.Link
+		songReqFN.Text = returnMockMU.Text
+		songReqFN.ReleaseDate = returnMockMU.ReleaseDate
+	}).Return(nil).Once()
+	mockSongusecase.On("CreateNewSong", mock.Anything, returnMockMU).Return(expectedResult, nil).Once()
+
+	handlers.NewSongHandler(router, mockSongusecase, mockMusicInfoUsecase)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/song/create", strings.NewReader(string(songReqJSON)))
+
+	expectedInJSON, _ := json.Marshal(expectedResult)
+	router.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, string(expectedInJSON), w.Body.String())
+
+	result := &entity.Song{}
+	err := json.Unmarshal(w.Body.Bytes(), result)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, expectedResult, result)
 }

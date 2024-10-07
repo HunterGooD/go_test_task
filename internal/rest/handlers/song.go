@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -39,7 +40,8 @@ func NewSongHandler(r *gin.Engine, usecase SongUsecase, musicInfo MusicInfoUseca
 
 	r.GET("/song/list", handler.GetSongs)
 	r.GET("/song/:song_id/text", handler.GetText)
-	r.GET("/song/create", handler.CreateNewSong)
+
+	r.POST("/song/create", handler.CreateNewSong)
 
 	r.DELETE("/song/:song_id", handler.DeleteSong)
 
@@ -80,7 +82,7 @@ func (s *SongHandler) GetSongs(c *gin.Context) {
 		err = nil // to nil because skipping error if io.EOF
 	}
 
-	slog.Info("get query param", slog.Any("querySong", querySong), slog.String("url", c.Request.URL.RawQuery))
+	slog.Info("get query param", slog.Any("querySong", querySong), slog.String("url_query", c.Request.URL.RawQuery))
 
 	if err := c.BindJSON(filtersSong); err != nil {
 		if !errors.Is(err, io.EOF) {
@@ -198,23 +200,24 @@ func (s *SongHandler) GetText(c *gin.Context) {
 // @Failure 404 {object} entity.ErrorResponse "Can not find ID"
 // @Router /song/create [post]
 func (s *SongHandler) CreateNewSong(c *gin.Context) {
-	var songInput *entity.SongRequest
+	songInput := &entity.SongRequest{}
 	ctx := c.Request.Context()
 
-	err := s.musicInfoUsecase.GetInfo(ctx, songInput)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, entity.ErrorResponse{
-			Code:  http.StatusInternalServerError,
-			Error: err.Error(),
-		})
-		return
-	}
-
-	err = c.BindJSON(songInput)
+	err := c.BindJSON(songInput)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
 			Code:  400,
 			Error: entity.ErrBadParamInput.Error(),
+		})
+		return
+	}
+
+	err = s.musicInfoUsecase.GetInfo(ctx, songInput)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, entity.ErrorResponse{
+			Code:    http.StatusInternalServerError,
+			Message: fmt.Sprintf("Error on `s.musicInfoUsecase.GetInfo` songInput=%v", songInput),
+			Error:   err.Error(),
 		})
 		return
 	}
