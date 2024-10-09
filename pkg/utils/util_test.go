@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/HunterGooD/go_test_task/internal/domain/entity"
-	"github.com/HunterGooD/go_test_task/internal/utils"
+	"github.com/HunterGooD/go_test_task/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 

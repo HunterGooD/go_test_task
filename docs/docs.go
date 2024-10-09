@@ -117,6 +117,12 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "boolean",
+                        "description": "Page",
+                        "name": "d",
+                        "in": "query"
+                    },
+                    {
                         "description": "Filters",
                         "name": "filters",
                         "in": "body",
@@ -373,6 +379,9 @@ const docTemplate = `{
                 },
                 "group": {
                     "$ref": "#/definitions/entity.Group"
+                },
+                "group_id": {
+                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"

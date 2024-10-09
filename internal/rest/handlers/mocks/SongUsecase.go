@@ -81,29 +81,29 @@ func (_m *SongUsecase) DeleteSoftByID(ctx context.Context, id int64) error {
 	return r0
 }
 
-// GetListSong provides a mock function with given fields: ctx, page, pageSize, filters
-func (_m *SongUsecase) GetListSong(ctx context.Context, page int, pageSize int, filters *entity.SongFilters) ([]entity.Song, error) {
-	ret := _m.Called(ctx, page, pageSize, filters)
+// GetListSong provides a mock function with given fields: ctx, page, pageSize, isDeleted, filters
+func (_m *SongUsecase) GetListSong(ctx context.Context, page int, pageSize int, isDeleted bool, filters *entity.SongFilters) (*entity.SongListResponse, error) {
+	ret := _m.Called(ctx, page, pageSize, isDeleted, filters)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetListSong")
 	}
 
-	var r0 []entity.Song
+	var r0 *entity.SongListResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, *entity.SongFilters) ([]entity.Song, error)); ok {
-		return rf(ctx, page, pageSize, filters)
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, bool, *entity.SongFilters) (*entity.SongListResponse, error)); ok {
+		return rf(ctx, page, pageSize, isDeleted, filters)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, *entity.SongFilters) []entity.Song); ok {
-		r0 = rf(ctx, page, pageSize, filters)
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, bool, *entity.SongFilters) *entity.SongListResponse); ok {
+		r0 = rf(ctx, page, pageSize, isDeleted, filters)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entity.Song)
+			r0 = ret.Get(0).(*entity.SongListResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int, *entity.SongFilters) error); ok {
-		r1 = rf(ctx, page, pageSize, filters)
+	if rf, ok := ret.Get(1).(func(context.Context, int, int, bool, *entity.SongFilters) error); ok {
+		r1 = rf(ctx, page, pageSize, isDeleted, filters)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -111,27 +111,29 @@ func (_m *SongUsecase) GetListSong(ctx context.Context, page int, pageSize int, 
 	return r0, r1
 }
 
-// TotalSongs provides a mock function with given fields: ctx
-func (_m *SongUsecase) TotalSongs(ctx context.Context) (int, error) {
-	ret := _m.Called(ctx)
+// GetTextSong provides a mock function with given fields: ctx, songID
+func (_m *SongUsecase) GetTextSong(ctx context.Context, songID int64) (*entity.SongTextResponse, error) {
+	ret := _m.Called(ctx, songID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for TotalSongs")
+		panic("no return value specified for GetTextSong")
 	}
 
-	var r0 int
+	var r0 *entity.SongTextResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (int, error)); ok {
-		return rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (*entity.SongTextResponse, error)); ok {
+		return rf(ctx, songID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) int); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) *entity.SongTextResponse); ok {
+		r0 = rf(ctx, songID)
 	} else {
-		r0 = ret.Get(0).(int)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.SongTextResponse)
+		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, songID)
 	} else {
 		r1 = ret.Error(1)
 	}

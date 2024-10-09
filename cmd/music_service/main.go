@@ -1,9 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/HunterGooD/go_test_task/config"
 	"github.com/HunterGooD/go_test_task/internal/repository"
@@ -12,6 +16,7 @@ import (
 	"github.com/HunterGooD/go_test_task/internal/rest/middleware"
 	"github.com/HunterGooD/go_test_task/internal/usecase"
 	"github.com/HunterGooD/go_test_task/pkg/api"
+	"github.com/HunterGooD/go_test_task/pkg/utils/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -24,7 +29,15 @@ import (
 
 // @BasePath /
 func main() {
+	// init config from env
 	cfg := config.NewConfig()
+
+	// init logger
+	logerQ := logger.NewJsonSlogLogger(os.Stdout, "info")
+	logerQ.Debug("", map[string]any{
+		"qwe":    1,
+		"qwe123": "asdasd",
+	})
 	var opts *slog.HandlerOptions
 	switch cfg.LogLevel {
 	case "INFO":
@@ -40,6 +53,7 @@ func main() {
 
 	slog.SetDefault(logger)
 
+	// init database connection
 	// TODO: switch cfg.DBtype for any connection db, add drivers for mysql, sqlite3
 	dbconn, err := sqlx.Open(cfg.DBType, cfg.DSN)
 	if err != nil {
@@ -52,7 +66,7 @@ func main() {
 		panic(err)
 	}
 
-	// router for api
+	// init and add midleware for router api
 	r := gin.New()
 	// TODO: middleware
 	r.Use(middleware.Logger())
@@ -68,8 +82,20 @@ func main() {
 	// init usecases
 	songUsecase := usecase.NewSongUsecase(songRepo, txManagerSongsGroups)
 	groupUsecase := usecase.NewGroupUsecase(groupRepo, txManagerSongsGroups)
-	apiMusicInfo, _ := api.NewClient("")
-	musicInfoUsecase := usecase.NewMusicInfoUsecase(apiMusicInfo)
+
+	// service for music info requests
+	var musicInfoUsecase handlers.MusicInfoUsecase
+	// if not set addres for server using mock impl
+	if len(cfg.AddrMusicInfoService) != 0 {
+		apiMusicInfo, err := api.NewClient(cfg.AddrMusicInfoService)
+		if err != nil {
+			slog.Error("error init client", slog.String("error on create client", err.Error()))
+			panic(err)
+		}
+		musicInfoUsecase = usecase.NewMusicInfoUsecase(apiMusicInfo)
+	} else {
+		musicInfoUsecase = usecase.NewMusicInfoUsecaseImited()
+	}
 
 	// init handlers with usecase
 	handlers.NewSongHandler(r, songUsecase, musicInfoUsecase)
@@ -77,6 +103,44 @@ func main() {
 
 	// init swagger docs
 	handlers.NewSwaggerHandler(r)
+
 	// run serving
-	r.Run(fmt.Sprintf("%s:%s", cfg.Host, cfg.Port))
+	ctxApp, cancelApp := context.WithCancel(context.Background())
+	defer cancelApp()
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: r.Handler(),
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("listen error", slog.Any("err", err))
+			panic(err)
+		}
+		cancelApp()
+	}()
+
+	// gracefull stop
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	// wait sys call
+	<-quit
+
+	slog.Info("Shutdown Server ...")
+	ctx, cancel := context.WithTimeout(ctxApp, 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		slog.Error("Server Shutdown:", slog.Any("err", err))
+		panic(err)
+	}
+
+	// catching ctx.Done(). timeout of 5 seconds.
+
+	<-ctx.Done()
+	if ctx.Err() == context.DeadlineExceeded {
+		slog.Info("timeout of 5 seconds.")
+	}
+
+	slog.Info("Server exiting")
 }

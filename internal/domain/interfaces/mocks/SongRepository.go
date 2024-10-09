@@ -210,9 +210,9 @@ func (_m *SongRepository) GetByNames(ctx context.Context, song_name string, grou
 	return r0, r1
 }
 
-// GetListSong provides a mock function with given fields: ctx, offset, limit, filters
-func (_m *SongRepository) GetListSong(ctx context.Context, offset int, limit int, filters *entity.SongFilters) ([]entity.Song, error) {
-	ret := _m.Called(ctx, offset, limit, filters)
+// GetListSong provides a mock function with given fields: ctx, offset, limit, with_deleted, filters
+func (_m *SongRepository) GetListSong(ctx context.Context, offset int, limit int, with_deleted bool, filters *entity.SongFilters) ([]entity.Song, error) {
+	ret := _m.Called(ctx, offset, limit, with_deleted, filters)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetListSong")
@@ -220,19 +220,49 @@ func (_m *SongRepository) GetListSong(ctx context.Context, offset int, limit int
 
 	var r0 []entity.Song
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, *entity.SongFilters) ([]entity.Song, error)); ok {
-		return rf(ctx, offset, limit, filters)
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, bool, *entity.SongFilters) ([]entity.Song, error)); ok {
+		return rf(ctx, offset, limit, with_deleted, filters)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, *entity.SongFilters) []entity.Song); ok {
-		r0 = rf(ctx, offset, limit, filters)
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, bool, *entity.SongFilters) []entity.Song); ok {
+		r0 = rf(ctx, offset, limit, with_deleted, filters)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entity.Song)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int, *entity.SongFilters) error); ok {
-		r1 = rf(ctx, offset, limit, filters)
+	if rf, ok := ret.Get(1).(func(context.Context, int, int, bool, *entity.SongFilters) error); ok {
+		r1 = rf(ctx, offset, limit, with_deleted, filters)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetReverseListSongs provides a mock function with given fields: ctx, offset, limit, with_deleted, filters
+func (_m *SongRepository) GetReverseListSongs(ctx context.Context, offset int, limit int, with_deleted bool, filters *entity.SongFilters) ([]entity.Song, error) {
+	ret := _m.Called(ctx, offset, limit, with_deleted, filters)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetReverseListSongs")
+	}
+
+	var r0 []entity.Song
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, bool, *entity.SongFilters) ([]entity.Song, error)); ok {
+		return rf(ctx, offset, limit, with_deleted, filters)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, bool, *entity.SongFilters) []entity.Song); ok {
+		r0 = rf(ctx, offset, limit, with_deleted, filters)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.Song)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, int, bool, *entity.SongFilters) error); ok {
+		r1 = rf(ctx, offset, limit, with_deleted, filters)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -268,9 +298,9 @@ func (_m *SongRepository) GetSongTextByID(ctx context.Context, songID int64) (st
 	return r0, r1
 }
 
-// Total provides a mock function with given fields: ctx
-func (_m *SongRepository) Total(ctx context.Context) (int, error) {
-	ret := _m.Called(ctx)
+// Total provides a mock function with given fields: ctx, with_deleted, filter
+func (_m *SongRepository) Total(ctx context.Context, with_deleted bool, filter *entity.SongFilters) (int, error) {
+	ret := _m.Called(ctx, with_deleted, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Total")
@@ -278,17 +308,17 @@ func (_m *SongRepository) Total(ctx context.Context) (int, error) {
 
 	var r0 int
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (int, error)); ok {
-		return rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, bool, *entity.SongFilters) (int, error)); ok {
+		return rf(ctx, with_deleted, filter)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) int); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, bool, *entity.SongFilters) int); ok {
+		r0 = rf(ctx, with_deleted, filter)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, bool, *entity.SongFilters) error); ok {
+		r1 = rf(ctx, with_deleted, filter)
 	} else {
 		r1 = ret.Error(1)
 	}

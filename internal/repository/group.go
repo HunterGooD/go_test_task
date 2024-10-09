@@ -24,11 +24,10 @@ func (g *groupRepository) WithTransaction(tx *sqlx.Tx) interfaces.GroupRepositor
 
 func (g *groupRepository) CreateGroup(ctx context.Context, group_name string) (*entity.Group, error) {
 	var err error
-	var songReturn *entity.Group
+	songReturn := &entity.Group{}
 
-	query := `INSERT INTO public.songs(
-		g_name )
-		VALUES ($1); RETURNING id, g_name`
+	query := `INSERT INTO groups(g_name )
+		VALUES ($1) RETURNING id, g_name`
 	// if transaction activ exec in transaction else db exec
 	if g.tx != nil {
 		err = g.tx.GetContext(ctx, songReturn, query, group_name)
@@ -39,9 +38,9 @@ func (g *groupRepository) CreateGroup(ctx context.Context, group_name string) (*
 }
 
 func (g *groupRepository) GetByName(ctx context.Context, group_name string) (*entity.Group, error) {
-	var groupResult *entity.Group
+	groupResult := &entity.Group{}
 	var err error
-	query := `SELECT * FROM groups WHERE g_name = ? LIMIT 1`
+	query := `SELECT * FROM groups WHERE g_name = $1`
 
 	if g.tx != nil {
 		err = g.tx.GetContext(ctx, groupResult, query, group_name)

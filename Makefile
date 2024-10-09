@@ -8,13 +8,13 @@ OUTPUT_DIR ?= ./dist/${BUILD}/bin
 .PHONY: cleango buildgo
 
 dbu:
-	goose -dir db/migrations up
+	@goose -dir db/migrations up
 
 dbd:
-	goose -dir db/migrations down
+	@goose -dir db/migrations down
 
 dbc:
-	goose -dir db/migrations create "$(MIGRATION_NAME)" sql
+	@goose -dir db/migrations create "$(MIGRATION_NAME)" sql
 
 compose_db: 
 	$(eval export HOST_DB=postgres)
@@ -37,7 +37,7 @@ buildgo: cleango
 	CGO_ENABLED=0 GOOS=linux go build -o ${OUTPUT_DIR}/${APP} ./cmd/music_service/
 
 rungo:
-	go run ./cmd/music_service/ 
+	@go run ./cmd/music_service/ 
 
 testgo:
-	go test ./...
+	@go test ./...

@@ -13,6 +13,8 @@ type Config struct {
 	DBType string
 	// LogLevel is level logging
 	LogLevel string
+	// Addres for music info service
+	AddrMusicInfoService string
 }
 
 func NewConfig() *Config {
@@ -24,5 +26,6 @@ func NewConfig() *Config {
 	if len(logLevel) == 0 {
 		logLevel = "INFO"
 	}
-	return &Config{host, port, dsn, DBtype, logLevel}
+	addrMusicInfoService := os.Getenv("MUSIC_INFO_SERVICE")
+	return &Config{host, port, dsn, DBtype, logLevel, addrMusicInfoService}
 }

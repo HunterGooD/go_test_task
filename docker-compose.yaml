@@ -13,6 +13,7 @@ services:
       DB_CONNECTION: ${DB_CONNECTION}
       DB_DRIVER: ${DB_DRIVER}
       LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
+      MUSIC_INFO_SERVICE: ${MUSIC_INFO_SERVICE}
     depends_on:
       goose:
         condition: service_started

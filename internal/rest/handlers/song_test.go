@@ -16,9 +16,14 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func ginTest() {
+	gin.SetMode(gin.TestMode)
+}
+
 // Test for GET /song/list
 func TestGetSongs(t *testing.T) {
-	gin.SetMode(gin.TestMode)
+	ginTest()
+
 	type SUTotal struct {
 		returnObject int
 		returnError  error
@@ -125,7 +130,7 @@ func TestGetSongs(t *testing.T) {
 				Return(returnMockSongUsecase, tt.mockSUGetListSong.returnError).
 				Once()
 
-			mockSongusecase.On("TotalSongs", mock.Anything).
+			mockSongusecase.On("TotalSongs", mock.Anything, mock.Anything).
 				Return(totalSong, tt.mockSUTotal.returnError).
 				Once()
 
@@ -161,57 +166,85 @@ func TestGetSongs(t *testing.T) {
 
 // Test for POST /song/create
 func TestCreateSong(t *testing.T) {
-	// TODO: Table test
-	gin.SetMode(gin.TestMode)
-	// tables := []struct{}
-	router := gin.Default()
-	mockSongusecase := new(mocks.SongUsecase)
-	mockMusicInfoUsecase := new(mocks.MusicInfoUsecase)
+	ginTest()
+
+	type mockMIUReturnVal struct {
+		res *entity.SongRequest
+		err error
+	}
+	type mockSUReturnalVal struct {
+		res *entity.Song
+		err error
+	}
 	d := time.Date(2024, 10, 6, 13, 13, 10, 0, time.Now().UTC().Location())
-	returnMockMU := &entity.SongRequest{
-		Song:        "Test song",
-		Group:       "Test group",
-		Link:        "Test link",
-		Text:        "Test text",
-		ReleaseDate: &d,
+	tables := []struct {
+		nameTest  string
+		songInput *entity.SongRequest
+		musicInfo *mockMIUReturnVal
+		songUS    *mockSUReturnalVal
+	}{
+		{
+			nameTest: "success",
+			songInput: &entity.SongRequest{
+				Song:  "Test song",
+				Group: "Test group",
+			},
+			musicInfo: &mockMIUReturnVal{
+				res: &entity.SongRequest{
+					Song:        "Test song",
+					Group:       "Test group",
+					Link:        "Test link",
+					Text:        "Test text",
+					ReleaseDate: &d,
+				},
+				err: nil,
+			},
+			songUS: &mockSUReturnalVal{
+				res: &entity.Song{
+					ID:          1,
+					Name:        "Test song",
+					Link:        "Test group",
+					Text:        "Test link",
+					ReleaseDate: d,
+					GroupID:     int64(1),
+				},
+				err: nil,
+			},
+		},
 	}
 
-	songReq := &entity.SongRequest{
-		Song:  "Test song",
-		Group: "Test group",
+	for _, tt := range tables {
+		t.Run(tt.nameTest, func(t *testing.T) {
+			router := gin.Default()
+			mockSongusecase := new(mocks.SongUsecase)
+			mockMusicInfoUsecase := new(mocks.MusicInfoUsecase)
+			expectedResult := tt.songUS.res
+			songReqJSON, err := json.Marshal(tt.songInput)
+			assert.NoError(t, err)
+
+			mockMusicInfoUsecase.On("GetInfo", mock.Anything, tt.songInput).Run(func(args mock.Arguments) {
+				songReqFN := args.Get(1).(*entity.SongRequest)
+				songReqFN.Link = tt.musicInfo.res.Link
+				songReqFN.Text = tt.musicInfo.res.Text
+				songReqFN.ReleaseDate = tt.musicInfo.res.ReleaseDate
+			}).Return(tt.musicInfo.err).Once()
+			mockSongusecase.On("CreateNewSong", mock.Anything, tt.musicInfo.res).Return(tt.songUS.res, tt.songUS.err).Once()
+
+			handlers.NewSongHandler(router, mockSongusecase, mockMusicInfoUsecase)
+
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/song/create", strings.NewReader(string(songReqJSON)))
+
+			expectedInJSON, _ := json.Marshal(expectedResult)
+			router.ServeHTTP(w, req)
+			assert.Equal(t, 200, w.Code)
+			assert.Equal(t, string(expectedInJSON), w.Body.String())
+
+			result := &entity.Song{}
+			err = json.Unmarshal(w.Body.Bytes(), result)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+			assert.Equal(t, expectedResult, result)
+		})
 	}
-
-	expectedResult := &entity.Song{
-		ID:          1,
-		Name:        "Test song",
-		Link:        "Test group",
-		Text:        "Test link",
-		ReleaseDate: d,
-		GroupID:     int64(1),
-	}
-
-	songReqJSON, _ := json.Marshal(songReq)
-
-	mockMusicInfoUsecase.On("GetInfo", mock.Anything, songReq).Run(func(args mock.Arguments) {
-		songReqFN := args.Get(1).(*entity.SongRequest)
-		songReqFN.Link = returnMockMU.Link
-		songReqFN.Text = returnMockMU.Text
-		songReqFN.ReleaseDate = returnMockMU.ReleaseDate
-	}).Return(nil).Once()
-	mockSongusecase.On("CreateNewSong", mock.Anything, returnMockMU).Return(expectedResult, nil).Once()
-
-	handlers.NewSongHandler(router, mockSongusecase, mockMusicInfoUsecase)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/song/create", strings.NewReader(string(songReqJSON)))
-
-	expectedInJSON, _ := json.Marshal(expectedResult)
-	router.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-	assert.Equal(t, string(expectedInJSON), w.Body.String())
-
-	result := &entity.Song{}
-	err := json.Unmarshal(w.Body.Bytes(), result)
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, expectedResult, result)
 }

@@ -55,7 +55,7 @@ func TestGetListSong(t *testing.T) {
 		songRepo.On("GetListSong", mock.Anything, mock.AnythingOfType("int"), mock.AnythingOfType("int"), mock.AnythingOfType("*entity.SongFilters")).
 			Return(mockReturnRepo, nil).Once()
 		songUsecase := usecase.NewSongUsecase(songRepo, transactionManager)
-		songList, err := songUsecase.GetListSong(context.TODO(), 1, 10, nil)
+		songList, err := songUsecase.GetListSong(context.TODO(), 1, 10, false, nil)
 		assert.NotEmpty(t, songList)
 		assert.NoError(t, err)
 		assert.Len(t, songList, len(mockReturnRepo))
@@ -68,7 +68,7 @@ func TestGetListSong(t *testing.T) {
 			Return(nil, entity.ErrNotFound).Once()
 
 		songUsecase := usecase.NewSongUsecase(songRepo, transactionManager)
-		songList, err := songUsecase.GetListSong(context.TODO(), 1, 10, nil)
+		songList, err := songUsecase.GetListSong(context.TODO(), 1, 10, false, nil)
 		assert.Empty(t, songList)
 		assert.Error(t, err)
 		assert.Len(t, songList, 0)

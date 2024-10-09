@@ -41,7 +41,7 @@ func TestGetListSong(t *testing.T) {
 		WithArgs(limit, offset).
 		WillReturnRows(rows)
 
-	songsList, err := songRepo.GetListSong(context.TODO(), offset, limit, nil)
+	songsList, err := songRepo.GetListSong(context.TODO(), offset, limit, false, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, songsList)

@@ -77,16 +77,16 @@ func GetFilterString(startPlaceholders int, filters *entity.SongFilters) (string
 		switch value.Kind() {
 		case reflect.String:
 			// Добавляем placeholder и значение в args
-			conditions = append(conditions, fmt.Sprintf("%s LIKE $%d", fieldName, argCounter))
+			conditions = append(conditions, fmt.Sprintf("s.%s LIKE $%d", fieldName, argCounter))
 			args = append(args, value.String()+"%")
 			argCounter++
 		case reflect.Int, reflect.Int64:
-			conditions = append(conditions, fmt.Sprintf("%s = $%d", fieldName, argCounter))
+			conditions = append(conditions, fmt.Sprintf("s.%s = $%d", fieldName, argCounter))
 			args = append(args, value.Int())
 			argCounter++
 		case reflect.Struct: // Работаем с временем
 			if field.Type == reflect.TypeOf(time.Time{}) {
-				conditions = append(conditions, fmt.Sprintf("%s = $%d", fieldName, argCounter))
+				conditions = append(conditions, fmt.Sprintf("s.%s = $%d", fieldName, argCounter))
 				args = append(args, value.Interface().(time.Time))
 				argCounter++
 			}
@@ -94,7 +94,7 @@ func GetFilterString(startPlaceholders int, filters *entity.SongFilters) (string
 			if value.Type() == reflect.TypeOf(&time.Time{}) {
 				timeValue := value.Interface().(*time.Time)
 				if timeValue != nil {
-					conditions = append(conditions, fmt.Sprintf("%s = $%d", fieldName, argCounter))
+					conditions = append(conditions, fmt.Sprintf("s.%s = $%d", fieldName, argCounter))
 					args = append(args, *timeValue) // Разыменовываем указатель
 					argCounter++
 				}
@@ -106,7 +106,7 @@ func GetFilterString(startPlaceholders int, filters *entity.SongFilters) (string
 
 	// Join to where statement with AND
 	if len(conditions) > 0 {
-		return "AND " + strings.Join(conditions, " AND "), args
+		return strings.Join(conditions, " AND "), args
 	}
 	return "", args
 }
