@@ -50,10 +50,10 @@ type SongListQueryParams struct {
 
 // SongFilters struct for bind body json if text biggest
 type SongFilters struct {
-	ID          int64      `json:"id,omitempty"           db:"id"`
-	Name        string     `json:"name,omitempty"         db:"m_name"`
-	Link        string     `json:"link,omitempty"         db:"m_link"`
-	Text        string     `json:"text,omitempty"         db:"m_text"`
-	ReleaseDate *time.Time `json:"release_date,omitempty" db:"m_release_date"`
-	GroupName   string     `json:"group_name,omitempty"   db:"g_name"`
+	ID          int64      `json:"id,omitempty"           db:"s.id"`
+	Name        string     `json:"name,omitempty"         db:"s.m_name"`
+	Link        string     `json:"link,omitempty"         db:"s.m_link"`
+	Text        string     `json:"text,omitempty"         db:"s.m_text"`
+	ReleaseDate *time.Time `json:"release_date,omitempty" db:"s.m_release_date"`
+	GroupName   string     `json:"group_name,omitempty"   db:"g.g_name"`
 }

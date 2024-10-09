@@ -22,7 +22,7 @@ func TestRef(t *testing.T) {
 			&entity.SongFilters{
 				ID: 1,
 			},
-			"AND id = $3",
+			"s.id = $3",
 			1,
 		},
 		{
@@ -31,7 +31,7 @@ func TestRef(t *testing.T) {
 				ID:        1,
 				GroupName: "GroupNameasdasd",
 			},
-			"AND id = $3 AND g_name LIKE $4",
+			"s.id = $3 AND g.g_name LIKE $4",
 			2,
 		},
 		{
@@ -44,7 +44,7 @@ func TestRef(t *testing.T) {
 				ReleaseDate: &d,
 				GroupName:   "GroupNameasdasd",
 			},
-			"AND id = $3 AND m_name LIKE $4 AND m_link LIKE $5 AND m_text LIKE $6 AND m_release_date = $7 AND g_name LIKE $8",
+			"s.id = $3 AND s.m_name LIKE $4 AND s.m_link LIKE $5 AND s.m_text LIKE $6 AND s.m_release_date = $7 AND g.g_name LIKE $8",
 			6,
 		},
 		{

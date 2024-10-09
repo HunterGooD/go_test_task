@@ -24,19 +24,14 @@ func ginTest() {
 func TestGetSongs(t *testing.T) {
 	ginTest()
 
-	type SUTotal struct {
-		returnObject int
-		returnError  error
-	}
 	type SUGetListSong struct {
-		returnObject []entity.Song
+		returnObject *entity.SongListResponse
 		returnError  error
 	}
 	tables := []struct {
 		nameTest            string
 		reqURL              string
 		mockSUGetListSong   SUGetListSong
-		mockSUTotal         SUTotal
 		queryParams         *entity.SongListQueryParams
 		filterBody          *entity.SongFilters
 		expectedCode        int
@@ -46,21 +41,22 @@ func TestGetSongs(t *testing.T) {
 			nameTest: "test succes with correct params",
 			reqURL:   "/song/list",
 			mockSUGetListSong: SUGetListSong{
-				returnObject: []entity.Song{
-					{
-						ID:   1,
-						Name: "song 1",
-					},
-					{
-						ID:   2,
-						Name: "song 2",
+				returnObject: &entity.SongListResponse{
+					Total:   2,
+					Page:    1,
+					PerPage: 10,
+					Songs: []entity.Song{
+						{
+							ID:   1,
+							Name: "song 1",
+						},
+						{
+							ID:   2,
+							Name: "song 2",
+						},
 					},
 				},
 				returnError: nil,
-			},
-			mockSUTotal: SUTotal{
-				returnObject: 2,
-				returnError:  nil,
 			},
 			queryParams: &entity.SongListQueryParams{
 				Page:  1,
@@ -74,11 +70,7 @@ func TestGetSongs(t *testing.T) {
 			nameTest: "test error without params",
 			reqURL:   "/song/list?p=11111&limit=9999999",
 			mockSUGetListSong: SUGetListSong{
-				returnObject: []entity.Song{},
-				returnError:  nil,
-			},
-			mockSUTotal: SUTotal{
-				returnObject: 0,
+				returnObject: &entity.SongListResponse{},
 				returnError:  entity.ErrBadParamInput,
 			},
 			queryParams:  &entity.SongListQueryParams{Page: 11111, Limit: 9999999},
@@ -86,7 +78,7 @@ func TestGetSongs(t *testing.T) {
 			expectedCode: 400,
 			expectedErrorStruct: &entity.ErrorResponse{
 				Code:    400,
-				Message: "Error usecase total songs",
+				Message: "Error usecase get list",
 				Error:   "params is not valid",
 			},
 		},
@@ -100,7 +92,6 @@ func TestGetSongs(t *testing.T) {
 			querySong := tt.queryParams
 			filterSong := tt.filterBody
 			returnMockSongUsecase := tt.mockSUGetListSong.returnObject
-			totalSong := tt.mockSUTotal.returnObject
 			expectedRes := &entity.SongListResponse{}
 
 			if querySong.Limit == 0 {
@@ -111,10 +102,10 @@ func TestGetSongs(t *testing.T) {
 				querySong.Page = 1
 			}
 			expectedRes = &entity.SongListResponse{
-				Total:   totalSong,
+				Total:   len(tt.mockSUGetListSong.returnObject.Songs),
 				Page:    querySong.Page,
 				PerPage: querySong.Limit,
-				Songs:   returnMockSongUsecase,
+				Songs:   tt.mockSUGetListSong.returnObject.Songs,
 			}
 
 			filterBodyJSON, _ := json.Marshal(filterSong)
@@ -126,12 +117,14 @@ func TestGetSongs(t *testing.T) {
 				expectedInJSON, _ = json.Marshal(expectedRes)
 			}
 
-			mockSongusecase.On("GetListSong", mock.Anything, querySong.Page, querySong.Limit, filterSong).
+			mockSongusecase.On(
+				"GetListSong",                               // name function
+				mock.Anything,                               // 1 context
+				mock.AnythingOfType("int"),                  // 2 page
+				mock.AnythingOfType("int"),                  // 3 pageSize
+				mock.AnythingOfType("bool"),                 // 4 isDeleting
+				mock.AnythingOfType("*entity.SongFilters")). // filter struct
 				Return(returnMockSongUsecase, tt.mockSUGetListSong.returnError).
-				Once()
-
-			mockSongusecase.On("TotalSongs", mock.Anything, mock.Anything).
-				Return(totalSong, tt.mockSUTotal.returnError).
 				Once()
 
 			handlers.NewSongHandler(router, mockSongusecase, mockMusicInfoUsecase)

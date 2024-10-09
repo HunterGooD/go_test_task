@@ -52,26 +52,27 @@ func TestGetListSong(t *testing.T) {
 			}},
 	}
 	t.Run("success", func(t *testing.T) {
-		songRepo.On("GetListSong", mock.Anything, mock.AnythingOfType("int"), mock.AnythingOfType("int"), mock.AnythingOfType("*entity.SongFilters")).
+		songRepo.On("GetListSong", mock.Anything, mock.AnythingOfType("int"), mock.AnythingOfType("int"), mock.AnythingOfType("bool"), mock.AnythingOfType("*entity.SongFilters")).
 			Return(mockReturnRepo, nil).Once()
+		songRepo.On("Total", mock.Anything, mock.AnythingOfType("bool"), mock.AnythingOfType("*entity.SongFilters")).
+			Return(2, nil).Once()
 		songUsecase := usecase.NewSongUsecase(songRepo, transactionManager)
 		songList, err := songUsecase.GetListSong(context.TODO(), 1, 10, false, nil)
 		assert.NotEmpty(t, songList)
 		assert.NoError(t, err)
-		assert.Len(t, songList, len(mockReturnRepo))
+		assert.Len(t, songList.Songs, len(mockReturnRepo))
 
 		songRepo.AssertExpectations(t)
 	})
 
 	t.Run("error-failed", func(t *testing.T) {
-		songRepo.On("GetListSong", mock.Anything, mock.AnythingOfType("int"), mock.AnythingOfType("int"), mock.AnythingOfType("*entity.SongFilters")).
+		songRepo.On("GetListSong", mock.Anything, mock.AnythingOfType("int"), mock.AnythingOfType("int"), mock.AnythingOfType("bool"), mock.AnythingOfType("*entity.SongFilters")).
 			Return(nil, entity.ErrNotFound).Once()
 
 		songUsecase := usecase.NewSongUsecase(songRepo, transactionManager)
 		songList, err := songUsecase.GetListSong(context.TODO(), 1, 10, false, nil)
-		assert.Empty(t, songList)
+		assert.Nil(t, songList)
 		assert.Error(t, err)
-		assert.Len(t, songList, 0)
 		assert.ErrorIs(t, err, entity.ErrNotFound)
 
 		songRepo.AssertExpectations(t)
@@ -90,6 +91,7 @@ func TestCreateSong(t *testing.T) {
 		mockTransactionManager.On("Begin").Return(nil)
 		mockTransactionManager.On("SongRepository").Return(mockSongRepo)
 		mockTransactionManager.On("GroupRepository").Return(mockGroupRepo)
+		mockTransactionManager.On("Commit").Return(nil)
 
 		group := &entity.Group{ID: 1, GName: "Test Group"}
 		mockGroupRepo.On("GetByName", mock.Anything, "Test Group").Return(group, nil)

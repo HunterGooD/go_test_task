@@ -19,32 +19,26 @@ func MergeSongParams(query *entity.SongListQueryParams, filter *entity.SongFilte
 		query = &entity.SongListQueryParams{}
 	}
 
-	// ID
 	if filter.ID == 0 {
 		filter.ID = query.ID
 	}
 
-	// Name
 	if filter.Name == "" {
 		filter.Name = query.Name
 	}
 
-	// Link
 	if filter.Link == "" {
 		filter.Link = query.Link
 	}
 
-	// Text
 	if filter.Text == "" {
 		filter.Text = query.Text
 	}
 
-	// ReleaseDate (проверяем, что значение не нулевое)
 	if filter.ReleaseDate == nil {
 		filter.ReleaseDate = query.ReleaseDate
 	}
 
-	// GroupName
 	if filter.GroupName == "" {
 		filter.GroupName = query.GroupName
 	}
@@ -52,6 +46,8 @@ func MergeSongParams(query *entity.SongListQueryParams, filter *entity.SongFilte
 	return filter
 }
 
+// GetFilterString filter struct to where for sql only song
+// TODO: refactor for others filter struct and add param or get name struct for name table
 func GetFilterString(startPlaceholders int, filters *entity.SongFilters) (string, []any) {
 	conditions := []string{}
 	args := make([]any, 0)
@@ -77,16 +73,16 @@ func GetFilterString(startPlaceholders int, filters *entity.SongFilters) (string
 		switch value.Kind() {
 		case reflect.String:
 			// Добавляем placeholder и значение в args
-			conditions = append(conditions, fmt.Sprintf("s.%s LIKE $%d", fieldName, argCounter))
+			conditions = append(conditions, fmt.Sprintf("%s LIKE $%d", fieldName, argCounter))
 			args = append(args, value.String()+"%")
 			argCounter++
 		case reflect.Int, reflect.Int64:
-			conditions = append(conditions, fmt.Sprintf("s.%s = $%d", fieldName, argCounter))
+			conditions = append(conditions, fmt.Sprintf("%s = $%d", fieldName, argCounter))
 			args = append(args, value.Int())
 			argCounter++
 		case reflect.Struct: // Работаем с временем
 			if field.Type == reflect.TypeOf(time.Time{}) {
-				conditions = append(conditions, fmt.Sprintf("s.%s = $%d", fieldName, argCounter))
+				conditions = append(conditions, fmt.Sprintf("%s = $%d", fieldName, argCounter))
 				args = append(args, value.Interface().(time.Time))
 				argCounter++
 			}
@@ -94,7 +90,7 @@ func GetFilterString(startPlaceholders int, filters *entity.SongFilters) (string
 			if value.Type() == reflect.TypeOf(&time.Time{}) {
 				timeValue := value.Interface().(*time.Time)
 				if timeValue != nil {
-					conditions = append(conditions, fmt.Sprintf("s.%s = $%d", fieldName, argCounter))
+					conditions = append(conditions, fmt.Sprintf("%s = $%d", fieldName, argCounter))
 					args = append(args, *timeValue) // Разыменовываем указатель
 					argCounter++
 				}
