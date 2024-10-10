@@ -120,13 +120,16 @@ func main() {
 	ctxApp, cancelApp := context.WithCancel(context.Background())
 	defer cancelApp()
 
+	address := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
+		Addr:    address,
 		Handler: r.Handler(),
 	}
 
 	go func() {
-		slogLogger.Info("gin server start")
+		slogLogger.Info("serve start on address", map[string]any{
+			"address": address,
+		})
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slogLogger.Error("listen error", map[string]any{"err": err})
 			panic(err)
