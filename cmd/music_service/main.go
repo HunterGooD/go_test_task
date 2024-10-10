@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"log/slog"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -33,56 +34,57 @@ func main() {
 	cfg := config.NewConfig()
 
 	// init logger
-	logerQ := logger.NewJsonSlogLogger(os.Stdout, "info")
-	logerQ.Debug("", map[string]any{
-		"qwe":    1,
-		"qwe123": "asdasd",
-	})
-	var opts *slog.HandlerOptions
-	switch cfg.LogLevel {
-	case "INFO":
-		opts = &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}
-	case "DEBUG":
-		opts = &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		}
-	}
-	logger := slog.New(slog.NewTextHandler(os.Stdout, opts))
-
-	slog.SetDefault(logger)
+	slogLogger := logger.NewJsonSlogLogger(os.Stdout, strings.ToUpper(cfg.LogLevel))
+	slogLogger.Info("init logger, config success!")
+	slogLogger.Debug("init config", map[string]any{"config": cfg})
 
 	// init database connection
 	// TODO: switch cfg.DBtype for any connection db, add drivers for mysql, sqlite3
+	slogLogger.Info("initial database connection ...", map[string]any{
+		"database_type": cfg.DBType,
+		"dsn":           cfg.DSN,
+	})
 	dbconn, err := sqlx.Open(cfg.DBType, cfg.DSN)
 	if err != nil {
-		logger.Error(err.Error())
+		slogLogger.Error(err.Error())
 		panic(err)
 	}
 
 	if err := dbconn.Ping(); err != nil {
-		logger.Error(err.Error())
+		slogLogger.Error(err.Error())
 		panic(err)
 	}
+	slogLogger.Info("database connection success")
 
 	// init and add midleware for router api
 	// gin.SetMode(gin.DebugMode) TODO: set mode release and debug change
 	r := gin.New()
+
 	// TODO: middleware
-	r.Use(middleware.Logger())
+	slogLogger.Info("gin middleware init ...")
+
+	midlWare := middleware.NewMiddleware(slogLogger)
+	r.Use(midlWare.Logger())
 	r.Use(gin.Recovery())
 
+	slogLogger.Info("gin middleware success")
+
 	// init repository for db execution
-	songRepo := repository.NewSongRepository(dbconn)
-	groupRepo := repository.NewGroupRepository(dbconn)
+	slogLogger.Info("repository init ...")
+
+	songRepo := repository.NewSongRepository(dbconn, slogLogger)
+	groupRepo := repository.NewGroupRepository(dbconn, slogLogger)
 
 	// init transaction manager for transaction control with repository
-	txManagerSongsGroups := transaction.NewTransactionManagerSongsGroups(dbconn, groupRepo, songRepo)
+	txManagerSongsGroups := transaction.NewTransactionManagerSongsGroups(dbconn, groupRepo, songRepo, slogLogger)
+
+	slogLogger.Info("repository init success")
 
 	// init usecases
-	songUsecase := usecase.NewSongUsecase(songRepo, txManagerSongsGroups)
-	groupUsecase := usecase.NewGroupUsecase(groupRepo, txManagerSongsGroups)
+	slogLogger.Info("usecases init ...")
+
+	songUsecase := usecase.NewSongUsecase(songRepo, txManagerSongsGroups, slogLogger)
+	groupUsecase := usecase.NewGroupUsecase(groupRepo, txManagerSongsGroups, slogLogger)
 
 	// service for music info requests
 	var musicInfoUsecase handlers.MusicInfoUsecase
@@ -90,49 +92,67 @@ func main() {
 	if len(cfg.AddrMusicInfoService) != 0 {
 		apiMusicInfo, err := api.NewClient(cfg.AddrMusicInfoService)
 		if err != nil {
-			slog.Error("error init client", slog.String("error on create client", err.Error()))
+			slogLogger.Error("error init client", map[string]any{
+				"error on create client": err.Error(),
+			})
 			panic(err)
 		}
-		musicInfoUsecase = usecase.NewMusicInfoUsecase(apiMusicInfo)
+		musicInfoUsecase = usecase.NewMusicInfoUsecase(apiMusicInfo, slogLogger)
 	} else {
-		musicInfoUsecase = usecase.NewMusicInfoUsecaseImited()
+		musicInfoUsecase = usecase.NewMusicInfoUsecaseImited(slogLogger)
 	}
+	slogLogger.Info("usecases init success")
 
 	// init handlers with usecase
-	handlers.NewSongHandler(r, songUsecase, musicInfoUsecase)
-	handlers.NewGroupHandler(r, groupUsecase)
+	slogLogger.Info("router register paths ...")
+
+	handlers.NewSongHandler(r, songUsecase, musicInfoUsecase, slogLogger)
+	handlers.NewGroupHandler(r, groupUsecase, slogLogger)
 
 	// init swagger docs
-	handlers.NewSwaggerHandler(r)
+	handlers.NewSwaggerHandler(r, slogLogger)
+
+	slogLogger.Info("router register paths success")
 
 	// run serving
+	slogLogger.Info("gin server starting ...")
+
 	ctxApp, cancelApp := context.WithCancel(context.Background())
 	defer cancelApp()
+
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
 		Handler: r.Handler(),
 	}
 
 	go func() {
+		slogLogger.Info("gin server start")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			slog.Error("listen error", slog.Any("err", err))
+			slogLogger.Error("listen error", map[string]any{"err": err})
 			panic(err)
 		}
 		cancelApp()
 	}()
 
 	// gracefull stop
+	slogLogger.Info("init gracefull ...")
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	// wait sys call
-	<-quit
+	slogLogger.Info("gracefull done, wait signals", map[string]any{
+		"syscall.SIGINT":  syscall.SIGINT,
+		"syscall.SIGTERM": syscall.SIGTERM,
+	})
 
-	slog.Info("Shutdown Server ...")
+	// wait system call
+	slogLogger.Info("getting syscal", map[string]any{"syscal": <-quit})
+
+	slogLogger.Info("Shutdown Server ...")
 	ctx, cancel := context.WithTimeout(ctxApp, 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		slog.Error("Server Shutdown:", slog.Any("err", err))
+		slogLogger.Error("Server Shutdown:", map[string]any{"err": err})
 		panic(err)
 	}
 
@@ -140,8 +160,8 @@ func main() {
 
 	<-ctx.Done()
 	if ctx.Err() == context.DeadlineExceeded {
-		slog.Info("timeout of 5 seconds.")
+		slogLogger.Info("timeout of 5 seconds.")
 	}
 
-	slog.Info("Server exiting")
+	slogLogger.Info("Server exiting") // BUG: service stopping with status 1 and dong exit with 0
 }

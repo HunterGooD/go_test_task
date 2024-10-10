@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/HunterGooD/go_test_task/internal/domain/entity"
+	"github.com/HunterGooD/go_test_task/internal/domain/interfaces"
 )
 
 var releaseDate time.Time = time.Now()
@@ -41,13 +42,18 @@ var FIXED_VALUES []entity.SongRequest = []entity.SongRequest{
 }
 
 type MusicInfoUsecaseImited struct {
+	log interfaces.Logger
 }
 
-func NewMusicInfoUsecaseImited() *MusicInfoUsecaseImited {
-	return &MusicInfoUsecaseImited{}
+func NewMusicInfoUsecaseImited(logger interfaces.Logger) *MusicInfoUsecaseImited {
+	return &MusicInfoUsecaseImited{logger}
 }
 
 func (m *MusicInfoUsecaseImited) GetInfo(ctx context.Context, songInput *entity.SongRequest) error {
+	m.log.Info("Music info mock searching", map[string]any{
+		"song_name":  songInput.Song,
+		"group_name": songInput.Group,
+	})
 	for _, v := range FIXED_VALUES {
 		if v.Song == songInput.Song && v.Group == songInput.Group {
 			songInput.Link = v.Link
@@ -56,5 +62,10 @@ func (m *MusicInfoUsecaseImited) GetInfo(ctx context.Context, songInput *entity.
 			return nil
 		}
 	}
+	m.log.Warn("error music info not found", map[string]any{
+		"code":  404,
+		"song":  songInput.Song,
+		"group": songInput.Group,
+	})
 	return entity.ErrNotFound
 }

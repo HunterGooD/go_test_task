@@ -2,8 +2,10 @@ package handlers_test
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -15,6 +17,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var logger *slog.Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 func ginTest() {
 	gin.SetMode(gin.TestMode)
@@ -127,7 +131,7 @@ func TestGetSongs(t *testing.T) {
 				Return(returnMockSongUsecase, tt.mockSUGetListSong.returnError).
 				Once()
 
-			handlers.NewSongHandler(router, mockSongusecase, mockMusicInfoUsecase)
+			handlers.NewSongHandler(router, mockSongusecase, mockMusicInfoUsecase, logger)
 
 			w := httptest.NewRecorder()
 
@@ -223,7 +227,7 @@ func TestCreateSong(t *testing.T) {
 			}).Return(tt.musicInfo.err).Once()
 			mockSongusecase.On("CreateNewSong", mock.Anything, tt.musicInfo.res).Return(tt.songUS.res, tt.songUS.err).Once()
 
-			handlers.NewSongHandler(router, mockSongusecase, mockMusicInfoUsecase)
+			handlers.NewSongHandler(router, mockSongusecase, mockMusicInfoUsecase, logger)
 
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("POST", "/song/create", strings.NewReader(string(songReqJSON)))

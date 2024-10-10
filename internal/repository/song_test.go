@@ -3,6 +3,8 @@ package repository_test
 import (
 	"context"
 	"database/sql"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -12,11 +14,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var logger *slog.Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 func TestGetListSong(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	songRepo := repository.NewSongRepository(sqlxDB)
+	songRepo := repository.NewSongRepository(sqlxDB, logger)
 
 	rows := sqlmock.NewRows([]string{"id", "m_name", "m_link", "m_text", "m_release_date", "group_id", "created_at", "update_at", "deleted_at", "group.id", "group.g_name", "group.created_at", "group.update_at", "group.deleted_at"}).
 		AddRow(1, "name song 1", "hello", "qweasdzxc123", time.Now(), 1, time.Now(), time.Now(), nil, 1, "friks", time.Now(), time.Now(), nil).
@@ -54,7 +58,7 @@ func TestGetSongTextByID(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	songRepo := repository.NewSongRepository(sqlxDB)
+	songRepo := repository.NewSongRepository(sqlxDB, logger)
 
 	text := "asdkasndkjasjkdhajksdakjjsdkjasjkdnajksndajksndnjkansjkdbajksbd"
 	// rows := sqlmock.NewRows([]string{"id", "m_name", "m_link", "m_text", "m_release_date", "created_at", "update_at", "deleted_at"}).
@@ -79,7 +83,7 @@ func TestGetSongTextByIDError(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	songRepo := repository.NewSongRepository(sqlxDB)
+	songRepo := repository.NewSongRepository(sqlxDB, logger)
 
 	// rows := sqlmock.NewRows([]string{"id", "m_name", "m_link", "m_text", "m_release_date", "created_at", "update_at", "deleted_at"}).
 

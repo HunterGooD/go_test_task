@@ -12,45 +12,97 @@ import (
 type groupRepository struct {
 	db *sqlx.DB
 	tx *sqlx.Tx
+
+	log interfaces.Logger
 }
 
-func NewGroupRepository(conn *sqlx.DB) *groupRepository {
-	return &groupRepository{conn, nil}
+func NewGroupRepository(conn *sqlx.DB, logger interfaces.Logger) *groupRepository {
+	logger.Info("Creat group repo")
+	return &groupRepository{conn, nil, logger}
 }
 
 func (g *groupRepository) WithTransaction(tx *sqlx.Tx) interfaces.GroupRepository {
-	return &groupRepository{g.db, tx}
+	g.log.Info("Creat group repo with transaction")
+	return &groupRepository{g.db, tx, g.log}
 }
 
 func (g *groupRepository) CreateGroup(ctx context.Context, group_name string) (*entity.Group, error) {
 	var err error
-	songReturn := &entity.Group{}
-
+	group := &entity.Group{}
 	query := `INSERT INTO groups(g_name )
 		VALUES ($1) RETURNING id, g_name`
+
 	// if transaction activ exec in transaction else db exec
 	if g.tx != nil {
-		err = g.tx.GetContext(ctx, songReturn, query, group_name)
+		g.log.Info("create group with transaction", map[string]any{
+			"group_name": group_name,
+			"query":      query,
+		})
+		err = g.tx.GetContext(ctx, group, query, group_name)
 	} else {
-		err = g.db.GetContext(ctx, songReturn, query, group_name)
+		g.log.Info("create group without transaction", map[string]any{
+			"group_name": group_name,
+			"query":      query,
+		})
+		err = g.db.GetContext(ctx, group, query, group_name)
 	}
-	return songReturn, err
+
+	if err != nil {
+		g.log.Error("group creating error", map[string]any{
+			"err": err,
+		})
+		return nil, err
+	}
+
+	g.log.Info("create group success", map[string]any{
+		"group_name": group_name,
+		"group_id":   group.ID,
+	})
+	g.log.Debug("create group success", map[string]any{
+		"group": group,
+	})
+
+	return group, nil
 }
 
 func (g *groupRepository) GetByName(ctx context.Context, group_name string) (*entity.Group, error) {
-	groupResult := &entity.Group{}
+	group := &entity.Group{}
 	var err error
 	query := `SELECT * FROM groups WHERE g_name = $1`
 
 	if g.tx != nil {
-		err = g.tx.GetContext(ctx, groupResult, query, group_name)
+		g.log.Info("get group with transaction", map[string]any{
+			"group_name": group_name,
+			"query":      query,
+		})
+		err = g.tx.GetContext(ctx, group, query, group_name)
 	} else {
-		err = g.db.GetContext(ctx, groupResult, query, group_name)
+		g.log.Info("create group without transaction", map[string]any{
+			"group_name": group_name,
+			"query":      query,
+		})
+		err = g.db.GetContext(ctx, group, query, group_name)
 	}
-	if err == sql.ErrNoRows {
-		err = entity.ErrNotFound
+
+	if err != nil {
+		g.log.Error("group get error", map[string]any{
+			"err": err,
+		})
+		if err == sql.ErrNoRows {
+			return nil, entity.ErrNotFound
+		}
+		return nil, err
 	}
-	return groupResult, err
+
+	g.log.Info("get group success", map[string]any{
+		"group_name": group_name,
+		"group_id":   group.ID,
+	})
+	g.log.Debug("get group success", map[string]any{
+		"group": group,
+	})
+
+	return group, nil
 }
 
 // GetByID if withDeleted is true then view all rows

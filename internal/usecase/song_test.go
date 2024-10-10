@@ -2,6 +2,8 @@ package usecase_test
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -11,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var logger *slog.Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 func TestGetListSong(t *testing.T) {
 	songRepo := new(mocks.SongRepository)
@@ -56,7 +60,7 @@ func TestGetListSong(t *testing.T) {
 			Return(mockReturnRepo, nil).Once()
 		songRepo.On("Total", mock.Anything, mock.AnythingOfType("bool"), mock.AnythingOfType("*entity.SongFilters")).
 			Return(2, nil).Once()
-		songUsecase := usecase.NewSongUsecase(songRepo, transactionManager)
+		songUsecase := usecase.NewSongUsecase(songRepo, transactionManager, logger)
 		songList, err := songUsecase.GetListSong(context.TODO(), 1, 10, false, nil)
 		assert.NotEmpty(t, songList)
 		assert.NoError(t, err)
@@ -69,7 +73,7 @@ func TestGetListSong(t *testing.T) {
 		songRepo.On("GetListSong", mock.Anything, mock.AnythingOfType("int"), mock.AnythingOfType("int"), mock.AnythingOfType("bool"), mock.AnythingOfType("*entity.SongFilters")).
 			Return(nil, entity.ErrNotFound).Once()
 
-		songUsecase := usecase.NewSongUsecase(songRepo, transactionManager)
+		songUsecase := usecase.NewSongUsecase(songRepo, transactionManager, logger)
 		songList, err := songUsecase.GetListSong(context.TODO(), 1, 10, false, nil)
 		assert.Nil(t, songList)
 		assert.Error(t, err)
@@ -100,7 +104,7 @@ func TestCreateSong(t *testing.T) {
 		mockSongRepo.On("GetByName", mock.Anything, "Test Song", group.ID).Return(nil, entity.ErrNotFound)
 		mockSongRepo.On("CreateSong", mock.Anything, group.ID, mock.Anything).Return(songExcepted, nil)
 
-		songUsecase := usecase.NewSongUsecase(mockSongRepo, mockTransactionManager)
+		songUsecase := usecase.NewSongUsecase(mockSongRepo, mockTransactionManager, logger)
 
 		song, err := songUsecase.CreateNewSong(context.TODO(), songInput)
 
@@ -125,7 +129,7 @@ func TestCreateSong(t *testing.T) {
 		mockGroupRepo.On("GetByName", mock.Anything, "Test Group").Return(nil, entity.ErrNotFound)
 		mockGroupRepo.On("CreateGroup", mock.Anything, "Test Group").Return(nil, entity.ErrNotFound)
 
-		songUsecase := usecase.NewSongUsecase(mockSongRepo, mockTransactionManager)
+		songUsecase := usecase.NewSongUsecase(mockSongRepo, mockTransactionManager, logger)
 
 		song, err := songUsecase.CreateNewSong(context.TODO(), songInput)
 

@@ -26,7 +26,7 @@ func TestGetById1(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
-	group := repository.NewGroupRepository(sqlxDB)
+	group := repository.NewGroupRepository(sqlxDB, logger)
 
 	groupStruct, err := group.GetByID(context.TODO(), groupID)
 
@@ -55,7 +55,7 @@ func TestGetById2(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
-	group := repository.NewGroupRepository(sqlxDB)
+	group := repository.NewGroupRepository(sqlxDB, logger)
 
 	groupStruct, err := group.GetByID(context.TODO(), groupID)
 

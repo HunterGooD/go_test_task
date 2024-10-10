@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"fmt"
 	"io"
 	"log/slog"
 	"strings"
@@ -68,7 +67,6 @@ func parseOpt(opt ...any) []any {
 	for _, v := range opt {
 		switch val := v.(type) {
 		case map[string]any:
-			fmt.Printf("MAP %#v\n", val)
 			return mapParse(val)
 		default:
 			params = append(params, val)

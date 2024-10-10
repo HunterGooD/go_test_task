@@ -9,15 +9,18 @@ import (
 type GroupUsecase struct {
 	groupRepo                     interfaces.GroupRepository
 	transactionManagerSongsGroups interfaces.TransactionManagerSongsGroups
+	log                           interfaces.Logger
 }
 
 // NewGroupUsecase operations with songs get, change, delete
-func NewGroupUsecase(gr interfaces.GroupRepository, tmSG interfaces.TransactionManagerSongsGroups) *GroupUsecase {
-	return &GroupUsecase{gr, tmSG}
+func NewGroupUsecase(gr interfaces.GroupRepository, tmSG interfaces.TransactionManagerSongsGroups, logger interfaces.Logger) *GroupUsecase {
+	logger.Info("create group usecase")
+	return &GroupUsecase{gr, tmSG, logger}
 }
 
 func (gu *GroupUsecase) DeleteSoftGroup(ctx context.Context, group_name string) error {
-
+	// TODO: DO implement
+	return nil
 	err := gu.transactionManagerSongsGroups.Begin()
 	if err != nil {
 		return err
