@@ -8,6 +8,7 @@ RUN go mod download
 COPY ./cmd/music_service/ ./cmd/music_service/
 COPY ./internal/ ./internal/
 COPY ./config/ ./config/
+COPY ./docs/ ./docs/
 COPY ./pkg/ ./pkg/
 COPY ./.env ./
 COPY ./Makefile ./
@@ -16,6 +17,7 @@ RUN OUTPUT_DIR=/app make buildgo
 
 # Run the tests in the container
 FROM build-stage AS run-test-stage
+# RUN go generate ./...
 RUN go test -v ./...
 
 # Deploy the application binary into a lean image

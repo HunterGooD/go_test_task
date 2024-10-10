@@ -6,6 +6,6 @@ ALTER TABLE songs
 
 -- +goose Down
 -- +goose StatementBegin
-ALTER TABLE user
+ALTER TABLE songs
   DROP COLUMN IF EXISTS group_id;
 -- +goose StatementEnd

@@ -1,0 +1,333 @@
+basePath: /
+definitions:
+  entity.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  entity.Group:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        description: DeletedAt nil value if not deleted
+        type: string
+      g_name:
+        type: string
+      id:
+        type: integer
+      updated_at:
+        type: string
+    required:
+    - g_name
+    type: object
+  entity.Song:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      group:
+        $ref: '#/definitions/entity.Group'
+      group_id:
+        type: integer
+      id:
+        type: integer
+      link:
+        type: string
+      name:
+        type: string
+      release_date:
+        type: string
+      text:
+        type: string
+      update_at:
+        type: string
+    type: object
+  entity.SongFilters:
+    properties:
+      group_name:
+        type: string
+      id:
+        type: integer
+      link:
+        type: string
+      name:
+        type: string
+      release_date:
+        type: string
+      text:
+        type: string
+    type: object
+  entity.SongListResponse:
+    properties:
+      page:
+        type: integer
+      per_page:
+        type: integer
+      songs:
+        items:
+          $ref: '#/definitions/entity.Song'
+        type: array
+      total:
+        type: integer
+    type: object
+  entity.SongRequest:
+    properties:
+      group:
+        type: string
+      link:
+        type: string
+      release_date:
+        type: string
+      song:
+        type: string
+      text:
+        type: string
+    required:
+    - group
+    - song
+    type: object
+  entity.SongTextResponse:
+    properties:
+      page:
+        type: integer
+      text:
+        items:
+          type: string
+        type: array
+      total_pages:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: This is a simple api for music librarry
+  termsOfService: http://swagger.io/terms/
+  title: Music librarry API
+  version: 0.0.1alpha
+paths:
+  /song/{song_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deleting song if soft delete true then deleted_at in BD change
+        on NOW() or if soft is false then delete row from bd
+      parameters:
+      - description: Song id
+        in: path
+        name: song_id
+        required: true
+        type: integer
+      - description: Is soft delete
+        in: query
+        name: soft
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+        "400":
+          description: Params not valid
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Delete song
+      tags:
+      - Song
+    patch:
+      consumes:
+      - application/json
+      description: Patch song change any fields
+      parameters:
+      - description: Song id
+        in: path
+        name: song_id
+        required: true
+        type: integer
+      - description: Song with changing fields
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Song'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/entity.Song'
+        "400":
+          description: Params not valid
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Patch song
+      tags:
+      - Song
+    put:
+      consumes:
+      - application/json
+      description: Put song change all fields
+      parameters:
+      - description: Song id
+        in: path
+        name: song_id
+        required: true
+        type: integer
+      - description: Song with changing fields
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Song'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/entity.Song'
+        "400":
+          description: Params not valid
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Put song
+      tags:
+      - Song
+  /song/{song_id}/text:
+    get:
+      consumes:
+      - application/json
+      description: Get text with pagination
+      parameters:
+      - description: Song id
+        in: path
+        name: song_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/entity.SongTextResponse'
+        "400":
+          description: Params not valid
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: get text songs with pagination
+      tags:
+      - Song
+  /song/create:
+    post:
+      consumes:
+      - application/json
+      description: Creating song with song name and group name
+      parameters:
+      - description: Song insert
+        in: body
+        name: song_insert
+        required: true
+        schema:
+          $ref: '#/definitions/entity.SongRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/entity.Song'
+        "400":
+          description: Params not valid
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Create song
+      tags:
+      - Song
+  /song/list:
+    get:
+      consumes:
+      - application/json
+      description: Getting songs with pagination and filtered
+      parameters:
+      - description: With deleted
+        in: query
+        name: d
+        type: boolean
+      - in: query
+        name: group_name
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: link
+        type: string
+      - in: query
+        name: name
+        type: string
+      - in: query
+        name: p
+        type: integer
+      - in: query
+        name: release_date
+        type: string
+      - in: query
+        name: text
+        type: string
+      - description: Filters json body
+        in: body
+        name: filters
+        schema:
+          $ref: '#/definitions/entity.SongFilters'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/entity.SongListResponse'
+        "400":
+          description: Params not valid
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: get list songs with filters
+      tags:
+      - Song
+swagger: "2.0"
