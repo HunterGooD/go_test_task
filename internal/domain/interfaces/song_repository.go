@@ -21,7 +21,7 @@ type SongRepository interface {
 	GetByID(ctx context.Context, id int64) (*entity.Song, error)
 	Total(ctx context.Context, with_deleted bool, filter *entity.SongFilters) (int, error)
 
-	UpdateFromMapByID(ctx context.Context, id int64, fields map[string]string) (*entity.Song, error)
+	UpdateFromMapByID(ctx context.Context, id int64, song *entity.Song, fields map[string]any) error
 
 	DeleteSoftByID(ctx context.Context, id int64) error
 	DeleteSoftByGroupID(ctx context.Context, id int64) error

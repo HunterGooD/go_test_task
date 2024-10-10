@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/HunterGooD/go_test_task/internal/domain/entity"
 	"github.com/HunterGooD/go_test_task/internal/domain/interfaces"
@@ -205,8 +206,28 @@ func (s *songRepository) GetByID(ctx context.Context, id int64) (*entity.Song, e
 	return song, err
 }
 
-func (s *songRepository) UpdateFromMapByID(ctx context.Context, id int64, fields map[string]string) (*entity.Song, error) {
-	return nil, nil
+func (s *songRepository) UpdateFromMapByID(ctx context.Context, id int64, song *entity.Song, fields map[string]any) error {
+	queryTemplate := `UPDATE songs
+						SET %s
+						WHERE id = $%d RETURNING id, m_name, m_link, m_text, m_release_date, group_id`
+	updateString, params := s.getUpdateString(fields)
+	params = append(params, id)
+	query := fmt.Sprintf(queryTemplate, updateString, len(params))
+	slog.Info("Update query", slog.Any("query", query), slog.Any("len", len(params)), slog.Any("params", params))
+	s.db.GetContext(ctx, song, query, params...)
+	return nil
+}
+
+func (s *songRepository) getUpdateString(fields map[string]any) (string, []any) {
+	fieldsUpdate := make([]string, 0)
+	params := make([]any, 0)
+	idPlaceholder := 1
+	for k, v := range fields {
+		fieldsUpdate = append(fieldsUpdate, fmt.Sprintf("%s = $%d", k, idPlaceholder))
+		params = append(params, v)
+		idPlaceholder++
+	}
+	return strings.Join(fieldsUpdate, ", "), params
 }
 
 func (s *songRepository) UpdateFromMapByNames(ctx context.Context, song_name, group_name string, fields map[string]string) (*entity.Song, error) {
@@ -239,15 +260,18 @@ func (s *songRepository) DeleteSoftByNames(ctx context.Context, song_name, group
 	return nil
 }
 
-func (s *songRepository) DeleteSoftSong(ctx context.Context) error {
-	_ = `-- SOFT DELETE SONG
-	UPDATE songs
-		SET deleted_at=CURRENT_TIMESTAMP
-		WHERE id=? OR name='?';`
-	return nil
-}
-
 func (s *songRepository) DeleteForceByID(ctx context.Context, id int64) error {
+	query := `DELETE FROM songs WHERE id = $1`
+	res, err := s.db.ExecContext(ctx, query, id)
+	if err != nil {
+		rows, err := res.RowsAffected()
+		if err != nil {
+			if rows == 0 {
+				return entity.ErrNotFound
+			}
+		}
+		return err
+	}
 	return nil
 }
 

@@ -67,6 +67,7 @@ func main() {
 	}
 
 	// init and add midleware for router api
+	// gin.SetMode(gin.DebugMode) TODO: set mode release and debug change
 	r := gin.New()
 	// TODO: middleware
 	r.Use(middleware.Logger())

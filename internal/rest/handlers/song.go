@@ -21,6 +21,8 @@ type SongUsecase interface {
 	CreateNewSong(ctx context.Context, songInput *entity.SongRequest) (*entity.Song, error)
 	GetTextSong(ctx context.Context, songID int64) (*entity.SongTextResponse, error)
 	GetListSong(ctx context.Context, page, pageSize int, isDeleted bool, filters *entity.SongFilters) (*entity.SongListResponse, error)
+	FullUpdateSong(ctx context.Context, song *entity.Song) error
+	UpdateSong(ctx context.Context, song *entity.Song) error
 	DeleteSoftByID(ctx context.Context, id int64) error
 	DeleteForceByID(ctx context.Context, id int64) error
 }
@@ -55,12 +57,13 @@ func NewSongHandler(r *gin.Engine, usecase SongUsecase, musicInfo MusicInfoUseca
 // @Tags Song
 // @Accept json
 // @Produce json
-// @Param   p          query    entity.SongListQueryParams  false  "Page"
-// @Param   d          query    bool  false  "Page"
-// @Param   filters    body     entity.SongFilters          false  "Filters"
+// @Param   d            query    bool                        false  "With deleted"
+// @Param   query_params query    entity.SongListQueryParams  false  "Query params"
+// @Param   filters      body     entity.SongFilters          false  "Filters json body"
 // @Success 200 {object} entity.SongListResponse "ok"
 // @Failure 400 {object} entity.ErrorResponse "Params not valid"
 // @Failure 404 {object} entity.ErrorResponse "Can not find ID"
+// @Failure 500 {object} entity.ErrorResponse "Internal server error"
 // @Router /song/list [get]
 func (s *SongHandler) GetSongs(c *gin.Context) {
 	var page, limit int
@@ -158,9 +161,8 @@ func (s *SongHandler) GetText(c *gin.Context) {
 	text, err := s.songUsecase.GetTextSong(ctx, songID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
-			Code:    http.StatusBadRequest,
-			Message: "",
-			Error:   err.Error(),
+			Code:  http.StatusBadRequest,
+			Error: err.Error(),
 		})
 		return
 	}
@@ -170,12 +172,12 @@ func (s *SongHandler) GetText(c *gin.Context) {
 
 // @Summary Create song
 // @Schemes
-// @Description Creating
+// @Description Creating song with song name and group name
 // @Tags Song
 // @Accept json
 // @Produce json
 // @Param song_insert body entity.SongRequest true "Song insert"
-// @Success 200 {object} entity.Song           "ok"
+// @Success 200 {object} entity.Song          "ok"
 // @Failure 400 {object} entity.ErrorResponse "Params not valid"
 // @Failure 404 {object} entity.ErrorResponse "Can not find ID"
 // @Router /song/create [post]
@@ -220,19 +222,19 @@ func (s *SongHandler) CreateNewSong(c *gin.Context) {
 
 // @Summary Delete song
 // @Schemes
-// @Description Deleting song
+// @Description Deleting song if soft delete true then deleted_at in BD change on NOW() or if soft is false then delete row from bd
 // @Tags Song
 // @Accept json
 // @Produce json
 // @Param song_id path  int  true  "Song id"
 // @Param soft    query bool false "Is soft delete"
-// @Success 200 "ok"
+// @Success 200  "ok"
 // @Failure 400 {object} entity.ErrorResponse "Params not valid"
 // @Failure 404 {object} entity.ErrorResponse "Can not find ID"
 // @Router /song/{song_id} [delete]
 func (s *SongHandler) DeleteSong(c *gin.Context) {
 	// songID, err := strconv.Atoi(c.Param("song_id")) return int but id is int64
-	isSoft := c.Query("soft")
+	isSoft := c.Query("soft") // TODO pars bool
 	ctx := c.Request.Context()
 	songID, err := strconv.ParseInt(c.Param("song_id"), 10, 0)
 	if err != nil {
@@ -263,35 +265,97 @@ func (s *SongHandler) DeleteSong(c *gin.Context) {
 		})
 		return
 	}
-	c.String(http.StatusOK, "ok")
+	c.Status(http.StatusOK)
 }
 
 // @Summary Put song
 // @Schemes
-// @Description Put song
+// @Description Put song change all fields
 // @Tags Song
 // @Accept json
 // @Produce json
-// @Param song_id path int true "Song id"
-// @Success 200 {string} string               "ok"
+// @Param song_id path int         true "Song id"
+// @Param song    body entity.Song true "Song with changing fields"
+// @Success 200 {object} entity.Song           "ok"
 // @Failure 400 {object} entity.ErrorResponse "Params not valid"
 // @Failure 404 {object} entity.ErrorResponse "Can not find ID"
 // @Router /song/{song_id} [put]
 func (s *SongHandler) PutSong(c *gin.Context) {
+	song := &entity.Song{}
+	ctx := c.Request.Context()
+	songID, err := strconv.ParseInt(c.Param("song_id"), 10, 0)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+			Code:  400,
+			Error: entity.ErrBadParamInput.Error(),
+		})
+		return
+	}
+	if err := c.BindJSON(song); err != nil {
+		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+			Code:  400,
+			Error: entity.ErrBadParamInput.Error(),
+		})
+		return
+	}
 
+	if song.ID == 0 {
+		song.ID = songID
+	}
+
+	if err := s.songUsecase.FullUpdateSong(ctx, song); err != nil { // check on 404
+		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+			Code:  400,
+			Error: entity.ErrBadParamInput.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, song)
 }
 
 // @Summary Patch song
 // @Schemes
-// @Description Patch song
+// @Description Patch song change any fields
 // @Tags Song
 // @Accept json
 // @Produce json
-// @Param song_id path int true "Song id"
-// @Success 200 {string} string               "ok"
+// @Param song_id path int         true "Song id"
+// @Param song    body entity.Song true "Song with changing fields"
+// @Success 200 {object} entity.Song           "ok"
 // @Failure 400 {object} entity.ErrorResponse "Params not valid"
 // @Failure 404 {object} entity.ErrorResponse "Can not find ID"
 // @Router /song/{song_id} [patch]
 func (s *SongHandler) PatchSong(c *gin.Context) {
+	song := &entity.Song{}
+	ctx := c.Request.Context()
+	songID, err := strconv.ParseInt(c.Param("song_id"), 10, 0)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+			Code:  400,
+			Error: entity.ErrBadParamInput.Error(),
+		})
+		return
+	}
+	if err := c.BindJSON(song); err != nil {
+		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+			Code:  400,
+			Error: entity.ErrBadParamInput.Error(),
+		})
+		return
+	}
 
+	if song.ID == 0 {
+		song.ID = songID
+	}
+
+	if err := s.songUsecase.UpdateSong(ctx, song); err != nil { //TODO: check on 404
+		c.JSON(http.StatusBadRequest, entity.ErrorResponse{
+			Code:  400,
+			Error: entity.ErrBadParamInput.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, song)
 }

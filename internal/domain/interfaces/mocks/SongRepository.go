@@ -326,34 +326,22 @@ func (_m *SongRepository) Total(ctx context.Context, with_deleted bool, filter *
 	return r0, r1
 }
 
-// UpdateFromMapByID provides a mock function with given fields: ctx, id, fields
-func (_m *SongRepository) UpdateFromMapByID(ctx context.Context, id int64, fields map[string]string) (*entity.Song, error) {
-	ret := _m.Called(ctx, id, fields)
+// UpdateFromMapByID provides a mock function with given fields: ctx, id, song, fields
+func (_m *SongRepository) UpdateFromMapByID(ctx context.Context, id int64, song *entity.Song, fields map[string]any) error {
+	ret := _m.Called(ctx, id, song, fields)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateFromMapByID")
 	}
 
-	var r0 *entity.Song
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, map[string]string) (*entity.Song, error)); ok {
-		return rf(ctx, id, fields)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, map[string]string) *entity.Song); ok {
-		r0 = rf(ctx, id, fields)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, *entity.Song, map[string]any) error); ok {
+		r0 = rf(ctx, id, song, fields)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*entity.Song)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, map[string]string) error); ok {
-		r1 = rf(ctx, id, fields)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // WithTransaction provides a mock function with given fields: tx

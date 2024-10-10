@@ -18,7 +18,7 @@ const docTemplate = `{
     "paths": {
         "/song/create": {
             "post": {
-                "description": "Creating",
+                "description": "Creating song with song name and group name",
                 "consumes": [
                     "application/json"
                 ],
@@ -77,6 +77,12 @@ const docTemplate = `{
                 "summary": "get list songs with filters",
                 "parameters": [
                     {
+                        "type": "boolean",
+                        "description": "With deleted",
+                        "name": "d",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "group_name",
                         "in": "query"
@@ -117,13 +123,7 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "boolean",
-                        "description": "Page",
-                        "name": "d",
-                        "in": "query"
-                    },
-                    {
-                        "description": "Filters",
+                        "description": "Filters json body",
                         "name": "filters",
                         "in": "body",
                         "schema": {
@@ -149,13 +149,19 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/entity.ErrorResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/entity.ErrorResponse"
+                        }
                     }
                 }
             }
         },
         "/song/{song_id}": {
             "put": {
-                "description": "Put song",
+                "description": "Put song change all fields",
                 "consumes": [
                     "application/json"
                 ],
@@ -173,13 +179,22 @@ const docTemplate = `{
                         "name": "song_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Song with changing fields",
+                        "name": "song",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entity.Song"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/entity.Song"
                         }
                     },
                     "400": {
@@ -197,7 +212,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deleting song",
+                "description": "Deleting song if soft delete true then deleted_at in BD change on NOW() or if soft is false then delete row from bd",
                 "consumes": [
                     "application/json"
                 ],
@@ -242,7 +257,7 @@ const docTemplate = `{
                 }
             },
             "patch": {
-                "description": "Patch song",
+                "description": "Patch song change any fields",
                 "consumes": [
                     "application/json"
                 ],
@@ -260,13 +275,22 @@ const docTemplate = `{
                         "name": "song_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Song with changing fields",
+                        "name": "song",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entity.Song"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/entity.Song"
                         }
                     },
                     "400": {

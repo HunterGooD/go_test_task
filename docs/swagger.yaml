@@ -114,7 +114,8 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Deleting song
+      description: Deleting song if soft delete true then deleted_at in BD change
+        on NOW() or if soft is false then delete row from bd
       parameters:
       - description: Song id
         in: path
@@ -144,20 +145,26 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Patch song
+      description: Patch song change any fields
       parameters:
       - description: Song id
         in: path
         name: song_id
         required: true
         type: integer
+      - description: Song with changing fields
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Song'
       produces:
       - application/json
       responses:
         "200":
           description: ok
           schema:
-            type: string
+            $ref: '#/definitions/entity.Song'
         "400":
           description: Params not valid
           schema:
@@ -172,20 +179,26 @@ paths:
     put:
       consumes:
       - application/json
-      description: Put song
+      description: Put song change all fields
       parameters:
       - description: Song id
         in: path
         name: song_id
         required: true
         type: integer
+      - description: Song with changing fields
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Song'
       produces:
       - application/json
       responses:
         "200":
           description: ok
           schema:
-            type: string
+            $ref: '#/definitions/entity.Song'
         "400":
           description: Params not valid
           schema:
@@ -230,7 +243,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creating
+      description: Creating song with song name and group name
       parameters:
       - description: Song insert
         in: body
@@ -262,6 +275,10 @@ paths:
       - application/json
       description: Getting songs with pagination and filtered
       parameters:
+      - description: With deleted
+        in: query
+        name: d
+        type: boolean
       - in: query
         name: group_name
         type: string
@@ -286,11 +303,7 @@ paths:
       - in: query
         name: text
         type: string
-      - description: Page
-        in: query
-        name: d
-        type: boolean
-      - description: Filters
+      - description: Filters json body
         in: body
         name: filters
         schema:
@@ -308,6 +321,10 @@ paths:
             $ref: '#/definitions/entity.ErrorResponse'
         "404":
           description: Can not find ID
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+        "500":
+          description: Internal server error
           schema:
             $ref: '#/definitions/entity.ErrorResponse'
       summary: get list songs with filters

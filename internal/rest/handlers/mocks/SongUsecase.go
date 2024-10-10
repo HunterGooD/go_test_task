@@ -81,6 +81,24 @@ func (_m *SongUsecase) DeleteSoftByID(ctx context.Context, id int64) error {
 	return r0
 }
 
+// FullUpdateSong provides a mock function with given fields: ctx, song
+func (_m *SongUsecase) FullUpdateSong(ctx context.Context, song *entity.Song) error {
+	ret := _m.Called(ctx, song)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FullUpdateSong")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Song) error); ok {
+		r0 = rf(ctx, song)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetListSong provides a mock function with given fields: ctx, page, pageSize, isDeleted, filters
 func (_m *SongUsecase) GetListSong(ctx context.Context, page int, pageSize int, isDeleted bool, filters *entity.SongFilters) (*entity.SongListResponse, error) {
 	ret := _m.Called(ctx, page, pageSize, isDeleted, filters)
@@ -139,6 +157,24 @@ func (_m *SongUsecase) GetTextSong(ctx context.Context, songID int64) (*entity.S
 	}
 
 	return r0, r1
+}
+
+// UpdateSong provides a mock function with given fields: ctx, song
+func (_m *SongUsecase) UpdateSong(ctx context.Context, song *entity.Song) error {
+	ret := _m.Called(ctx, song)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateSong")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Song) error); ok {
+		r0 = rf(ctx, song)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // NewSongUsecase creates a new instance of SongUsecase. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

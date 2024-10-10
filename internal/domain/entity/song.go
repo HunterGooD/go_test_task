@@ -3,15 +3,15 @@ package entity
 import "time"
 
 type Song struct {
-	ID          int64      `json:"id,omitempty"           db:"id"`
-	Name        string     `json:"name,omitempty"         db:"m_name"`
-	Link        string     `json:"link,omitempty"         db:"m_link"`
-	Text        string     `json:"text,omitempty"         db:"m_text"`
+	ID          int64      `json:"id"                     db:"id"`
+	Name        string     `json:"name"                   db:"m_name"`
+	Link        string     `json:"link"                   db:"m_link"`
+	Text        string     `json:"text"                   db:"m_text"`
 	ReleaseDate time.Time  `json:"release_date"           db:"m_release_date"`
 	CreatedAt   time.Time  `json:"created_at,omitempty"   db:"created_at"`
 	UpdateAt    time.Time  `json:"update_at,omitempty"    db:"update_at"`
 	DeletedAt   *time.Time `json:"deleted_at,omitempty"   db:"deleted_at"`
-	GroupID     int64      `json:"group_id,omitempty"     db:"group_id"`
+	GroupID     int64      `json:"group_id"               db:"group_id"`
 	Group       *Group     `json:"group,omitempty"        db:"group"`
 }
 

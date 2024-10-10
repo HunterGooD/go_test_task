@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/HunterGooD/go_test_task/internal/domain/entity"
 	"github.com/HunterGooD/go_test_task/internal/domain/interfaces"
@@ -12,6 +13,7 @@ import (
 type SongUsecase struct {
 	songRepo                      interfaces.SongRepository
 	transactionManagerSongsGroups interfaces.TransactionManagerSongsGroups
+	// logger                        interfaces.Logger
 }
 
 // NewSongUsecase operations with songs get, change, delete
@@ -139,6 +141,64 @@ func (su *SongUsecase) GetTextSong(ctx context.Context, songID int64) (*entity.S
 	return res, nil
 }
 
+func (su *SongUsecase) FullUpdateSong(ctx context.Context, song *entity.Song) error {
+	var params map[string]any
+
+	if song == nil {
+		params = map[string]any{
+			"m_name":         "",
+			"m_link":         "",
+			"m_text":         "",
+			"m_release_date": time.Now(),
+		}
+	} else {
+		params = map[string]any{
+			"m_name":         song.Name,
+			"m_link":         song.Link,
+			"m_text":         song.Text,
+			"m_release_date": song.ReleaseDate,
+		}
+	}
+
+	err := su.songRepo.UpdateFromMapByID(ctx, song.ID, song, params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (su *SongUsecase) UpdateSong(ctx context.Context, song *entity.Song) error {
+	params := make(map[string]any)
+	if song == nil {
+		return nil
+	}
+	if len(song.Name) != 0 {
+		params["m_name"] = song.Name
+	}
+	if len(song.Link) != 0 {
+		params["m_link"] = song.Link
+	}
+	if len(song.Text) != 0 {
+		params["m_text"] = song.Text
+	}
+	if song.DeletedAt != nil {
+		params["deleted_at"] = song.DeletedAt
+	}
+	if !song.ReleaseDate.IsZero() {
+		params["m_release_date"] = song.ReleaseDate
+	}
+
+	if len(params) == 0 {
+		return nil
+	}
+	err := su.songRepo.UpdateFromMapByID(ctx, song.ID, song, params)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
 func (su *SongUsecase) GetSongTextByID(ctx context.Context, id int64) {
 
 }
@@ -148,5 +208,5 @@ func (su *SongUsecase) DeleteSoftByID(ctx context.Context, id int64) error {
 }
 
 func (s *SongUsecase) DeleteForceByID(ctx context.Context, id int64) error {
-	return nil
+	return s.songRepo.DeleteForceByID(ctx, id)
 }
